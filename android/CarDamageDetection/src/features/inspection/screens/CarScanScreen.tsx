@@ -10,6 +10,8 @@ import {
   StatusBar as RNStatusBar,
 } from 'react-native';
 import {StatusBar} from 'expo-status-bar';
+import Constants, {AppOwnership, ExecutionEnvironment} from 'expo-constants';
+import {CameraView, useCameraPermissions} from 'expo-camera';
 import {
   Camera,
   useCameraDevice,
@@ -30,6 +32,12 @@ interface CarScanScreenProps {
   onCaptureCompleted?: (uri: string) => void;
 }
 
+const isExpoGo =
+  Constants.appOwnership === AppOwnership.Expo ||
+  (Constants as any).appOwnership === 'expo' ||
+  Constants.executionEnvironment === ExecutionEnvironment.StoreClient ||
+  (Constants.executionEnvironment as string) === 'storeClient';
+
 export default function CarScanScreen({
   onCaptureCompleted,
 }: CarScanScreenProps) {
@@ -39,10 +47,40 @@ export default function CarScanScreen({
   const [torchOn, setTorchOn] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const {hasPermission, requestPermission} = useCameraPermission();
+  // Vision Camera hooks (dev client / native build)
+  const {
+    hasPermission: visionPermission,
+    requestPermission: requestVisionPermission,
+  } = useCameraPermission();
   const device = useCameraDevice('back');
   const photoOutput = usePhotoOutput();
-  const cameraRef = useRef<any>(null);
+  const visionCameraRef = useRef<any>(null);
+
+  // Expo Camera hooks (Expo Go compatibility)
+  const [expoPermission, requestExpoPermission] = useCameraPermissions();
+  const expoCameraRef = useRef<any>(null);
+
+  const hasPermission = isExpoGo
+    ? Boolean(expoPermission?.granted)
+    : visionPermission;
+
+  const handleRequestPermission = useCallback(async () => {
+    if (!isExpoGo) {
+      if (requestVisionPermission) {
+        requestVisionPermission();
+      }
+      if (requestExpoPermission) {
+        requestExpoPermission().catch(() => {});
+      }
+    } else {
+      if (requestExpoPermission) {
+        await requestExpoPermission();
+      }
+      if (requestVisionPermission) {
+        requestVisionPermission().catch(() => {});
+      }
+    }
+  }, [requestExpoPermission, requestVisionPermission]);
 
   // Shutter action to capture still frame from live feed
   const handleCapture = useCallback(async () => {
@@ -56,7 +94,13 @@ export default function CarScanScreen({
 
       let savedFilePath: string | null = null;
 
-      if (photoOutput?.capturePhotoToFile) {
+      if (isExpoGo && expoCameraRef.current?.takePictureAsync) {
+        const photo = await expoCameraRef.current.takePictureAsync({
+          quality: 0.9,
+          skipProcessing: false,
+        });
+        savedFilePath = photo?.uri || null;
+      } else if (photoOutput?.capturePhotoToFile) {
         const photoFile = await photoOutput.capturePhotoToFile(
           {
             flashMode: torchOn ? 'on' : 'off',
@@ -75,6 +119,12 @@ export default function CarScanScreen({
         );
         savedFilePath = await photo.saveToTemporaryFileAsync();
         (photo as any)?.dispose?.();
+      } else if (expoCameraRef.current?.takePictureAsync) {
+        const photo = await expoCameraRef.current.takePictureAsync({
+          quality: 0.9,
+          skipProcessing: false,
+        });
+        savedFilePath = photo?.uri || null;
       } else {
         // Fallback for mock/test environments without native photoOutput
         savedFilePath = '/tmp/simulated_frame.jpg';
@@ -143,7 +193,7 @@ export default function CarScanScreen({
           </Text>
           <TouchableOpacity
             style={styles.permissionButton}
-            onPress={requestPermission}
+            onPress={handleRequestPermission}
             testID="grant-permission-button"
             activeOpacity={0.8}>
             <Text style={styles.permissionButtonText}>
@@ -163,7 +213,7 @@ export default function CarScanScreen({
   }
 
   // Camera device unavailable fallback (e.g. simulator)
-  if (!device && uiState !== 'captured') {
+  if (!device && !isExpoGo && uiState !== 'captured') {
     return (
       <View
         style={styles.permissionContainer}
@@ -215,15 +265,25 @@ export default function CarScanScreen({
       ) : (
         // STATE 1 & 2: Live camera stream (30 FPS)
         <View style={StyleSheet.absoluteFill} testID="vision-camera-view">
-          <Camera
-            ref={cameraRef}
-            style={StyleSheet.absoluteFill}
-            device={device || 'back'}
-            isActive={uiState === 'idle' || uiState === 'scanning'}
-            outputs={[photoOutput]}
-            constraints={[{fps: 30}]}
-            torchMode={torchOn ? 'on' : 'off'}
-          />
+          {isExpoGo ? (
+            <CameraView
+              ref={expoCameraRef}
+              style={StyleSheet.absoluteFill}
+              facing="back"
+              enableTorch={torchOn}
+              mode="picture"
+            />
+          ) : (
+            <Camera
+              ref={visionCameraRef}
+              style={StyleSheet.absoluteFill}
+              device={device || 'back'}
+              isActive={uiState === 'idle' || uiState === 'scanning'}
+              outputs={[photoOutput]}
+              constraints={[{fps: 30}]}
+              torchMode={torchOn ? 'on' : 'off'}
+            />
+          )}
         </View>
       )}
 
