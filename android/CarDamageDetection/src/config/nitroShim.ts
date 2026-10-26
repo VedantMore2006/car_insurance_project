@@ -3,17 +3,26 @@
 // top-level require('react-native-vision-camera') to throw ModuleNotFoundError.
 // This shim provides a fallback proxy so the app boots smoothly in Expo Go.
 
+const dummyDeviceFactory = {
+  cameraDevices: [],
+  getDefaultCamera: () => undefined,
+  getCameraForId: () => undefined,
+  getSupportedExtensions: async () => [],
+  supportedMultiCamDeviceCombinations: [],
+  addOnCameraDevicesChangedListener: () => ({remove: () => {}}),
+};
+
 const dummyCameraFactory = {
   cameraPermissionStatus: 'not-determined',
   microphonePermissionStatus: 'not-determined',
   requestCameraPermission: async () => false,
   requestMicrophonePermission: async () => false,
   supportsMultiCamSessions: false,
-  createDeviceFactory: async () => ({
-    getAvailableCameraDevices: () => [],
-    addOnCameraDevicesChangedListener: () => ({remove: () => {}}),
+  createDeviceFactory: async () => dummyDeviceFactory,
+  createPhotoOutput: () => ({
+    capturePhotoToFile: async () => ({filePath: '/tmp/simulated_frame.jpg'}),
+    capturePhoto: async () => ({saveToTemporaryFileAsync: async () => '/tmp/simulated_frame.jpg'}),
   }),
-  createPhotoOutput: () => ({}),
   createVideoOutput: () => ({}),
   createFrameOutput: () => ({}),
   createDepthFrameOutput: () => ({}),

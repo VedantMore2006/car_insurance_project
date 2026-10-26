@@ -38,51 +38,310 @@ const isExpoGo =
   Constants.executionEnvironment === ExecutionEnvironment.StoreClient ||
   (Constants.executionEnvironment as string) === 'storeClient';
 
-export default function CarScanScreen({
-  onCaptureCompleted,
-}: CarScanScreenProps) {
+interface CarScanViewBaseProps {
+  uiState: CarScanState;
+  capturedPhotoUri: string | null;
+  torchOn: boolean;
+  errorMessage: string | null;
+  onToggleTorch: () => void;
+  onCapture: () => void;
+  onRetake: () => void;
+  onAnalyse: () => void;
+  onGoBack: () => void;
+  children: React.ReactNode;
+}
+
+/**
+ * Shared presentation container for HUD, Silhouette Overlay, Shutter, and Actions
+ */
+function CarScanViewBase({
+  uiState,
+  capturedPhotoUri,
+  torchOn,
+  errorMessage,
+  onToggleTorch,
+  onCapture,
+  onRetake,
+  onAnalyse,
+  onGoBack,
+  children,
+}: CarScanViewBaseProps) {
+  return (
+    <View style={styles.container} testID="car-scan-screen">
+      <StatusBar style="light" />
+
+      {/* 1. Camera View or Freeze Frame */}
+      {uiState === 'captured' && capturedPhotoUri ? (
+        <Image
+          source={{uri: capturedPhotoUri}}
+          style={StyleSheet.absoluteFill}
+          resizeMode="cover"
+          testID="captured-freeze-frame"
+        />
+      ) : (
+        <View style={StyleSheet.absoluteFill} testID="vision-camera-view">
+          {children}
+        </View>
+      )}
+
+      {/* 2. Semi-transparent Car Silhouette Overlay (visible during idle) */}
+      <CarSilhouetteGuide
+        visible={uiState === 'idle'}
+        guideText="Align vehicle within guide"
+      />
+
+      {/* 3. Top HUD Controls Bar */}
+      <View style={styles.topHudContainer} pointerEvents="box-none">
+        <View style={styles.topBar}>
+          {/* Back button */}
+          <TouchableOpacity
+            style={styles.hudIconButton}
+            onPress={onGoBack}
+            testID="car-scan-back"
+            activeOpacity={0.7}>
+            <Text style={styles.hudIconText}>✕</Text>
+          </TouchableOpacity>
+
+          {/* Status Indicator Badge */}
+          <View style={styles.statusBadge} testID="scan-state-badge">
+            <View
+              style={[
+                styles.statusDot,
+                uiState === 'idle'
+                  ? styles.statusDotLive
+                  : uiState === 'scanning'
+                  ? styles.statusDotScanning
+                  : styles.statusDotCaptured,
+              ]}
+            />
+            <Text style={styles.statusText}>
+              {uiState === 'idle' && 'LIVE • 30 FPS'}
+              {uiState === 'scanning' && 'SCANNING...'}
+              {uiState === 'captured' && 'FRAME CAPTURED'}
+            </Text>
+          </View>
+
+          {/* Flash / Torch toggle button */}
+          <TouchableOpacity
+            style={[
+              styles.hudIconButton,
+              torchOn && styles.hudIconButtonActive,
+            ]}
+            onPress={onToggleTorch}
+            testID="torch-toggle-button"
+            disabled={uiState === 'captured'}
+            activeOpacity={0.7}>
+            <Text style={styles.hudIconText}>{torchOn ? '⚡' : '💡'}</Text>
+          </TouchableOpacity>
+        </View>
+
+        {errorMessage ? (
+          <View style={styles.errorBanner}>
+            <Text style={styles.errorBannerText}>{errorMessage}</Text>
+          </View>
+        ) : null}
+      </View>
+
+      {/* 4. Scanning State Spinner Overlay */}
+      {uiState === 'scanning' && (
+        <View style={styles.scanningOverlay} testID="scanning-indicator-view">
+          <View style={styles.scanningCard}>
+            <ActivityIndicator size="large" color={colors.accent} />
+            <Text style={styles.scanningTitle}>Capturing Still Frame</Text>
+            <Text style={styles.scanningSubtitle}>
+              Stabilizing vehicle alignment...
+            </Text>
+          </View>
+        </View>
+      )}
+
+      {/* 5. Bottom Controls: State Dependent */}
+      {uiState === 'captured' ? (
+        <View style={styles.bottomBarContainer} pointerEvents="box-none">
+          <View style={styles.actionButtonsRow}>
+            <TouchableOpacity
+              style={styles.retakeButton}
+              onPress={onRetake}
+              testID="retake-button"
+              activeOpacity={0.8}>
+              <Text style={styles.retakeButtonText}>↺ Retake</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.analyseButton}
+              onPress={onAnalyse}
+              testID="analyse-button"
+              activeOpacity={0.8}>
+              <Text style={styles.analyseButtonText}>Analyse Damage →</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      ) : (
+        <View
+          style={styles.shutterContainer}
+          pointerEvents={uiState === 'idle' ? 'auto' : 'none'}>
+          <TouchableOpacity
+            style={styles.shutterOuterRing}
+            onPress={onCapture}
+            disabled={uiState !== 'idle'}
+            testID="shutter-button"
+            activeOpacity={0.7}>
+            <View
+              style={[
+                styles.shutterInnerCircle,
+                uiState === 'scanning' && styles.shutterInnerDisabled,
+              ]}
+            />
+          </TouchableOpacity>
+        </View>
+      )}
+    </View>
+  );
+}
+
+/**
+ * Expo Go implementation using expo-camera
+ */
+function ExpoGoCarScanView({onCaptureCompleted}: CarScanScreenProps) {
   const navigation = useNavigation<Nav>();
   const [uiState, setUiState] = useState<CarScanState>('idle');
   const [capturedPhotoUri, setCapturedPhotoUri] = useState<string | null>(null);
   const [torchOn, setTorchOn] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Vision Camera hooks (dev client / native build)
-  const {
-    hasPermission: visionPermission,
-    requestPermission: requestVisionPermission,
-  } = useCameraPermission();
-  const device = useCameraDevice('back');
-  const photoOutput = usePhotoOutput();
-  const visionCameraRef = useRef<any>(null);
-
-  // Expo Camera hooks (Expo Go compatibility)
-  const [expoPermission, requestExpoPermission] = useCameraPermissions();
+  const [permission, requestPermission] = useCameraPermissions();
   const expoCameraRef = useRef<any>(null);
 
-  const hasPermission = isExpoGo
-    ? Boolean(expoPermission?.granted)
-    : visionPermission;
-
-  const handleRequestPermission = useCallback(async () => {
-    if (!isExpoGo) {
-      if (requestVisionPermission) {
-        requestVisionPermission();
-      }
-      if (requestExpoPermission) {
-        requestExpoPermission().catch(() => {});
-      }
-    } else {
-      if (requestExpoPermission) {
-        await requestExpoPermission();
-      }
-      if (requestVisionPermission) {
-        requestVisionPermission().catch(() => {});
-      }
+  const handleCapture = useCallback(async () => {
+    if (uiState !== 'idle') {
+      return;
     }
-  }, [requestExpoPermission, requestVisionPermission]);
 
-  // Shutter action to capture still frame from live feed
+    try {
+      setErrorMessage(null);
+      setUiState('scanning');
+
+      if (!expoCameraRef.current) {
+        throw new Error('Camera ref is not available');
+      }
+
+      const photo = await expoCameraRef.current.takePictureAsync({
+        quality: 0.9,
+        skipProcessing: false,
+      });
+
+      if (!photo?.uri) {
+        throw new Error('No frame file path was returned from camera');
+      }
+
+      const formattedUri = photo.uri.startsWith('file://')
+        ? photo.uri
+        : `file://${photo.uri}`;
+
+      setCapturedPhotoUri(formattedUri);
+      setUiState('captured');
+    } catch (err: any) {
+      console.warn('ExpoGoCarScan capture error:', err);
+      setErrorMessage(err?.message || 'Failed to capture frame from live feed');
+      setUiState('idle');
+      Alert.alert(
+        'Capture Error',
+        'Unable to capture still frame from the camera. Please try again.',
+      );
+    }
+  }, [uiState]);
+
+  const handleRetake = useCallback(() => {
+    setCapturedPhotoUri(null);
+    setErrorMessage(null);
+    setUiState('idle');
+  }, []);
+
+  const handleAnalyse = useCallback(() => {
+    if (!capturedPhotoUri) {
+      return;
+    }
+    if (onCaptureCompleted) {
+      onCaptureCompleted(capturedPhotoUri);
+      return;
+    }
+    navigation.navigate('ImagePreview', {
+      imageUri: capturedPhotoUri,
+      mediaType: 'image',
+    });
+  }, [capturedPhotoUri, onCaptureCompleted, navigation]);
+
+  if (!permission?.granted) {
+    return (
+      <View style={styles.permissionContainer} testID="permission-container">
+        <StatusBar style="light" />
+        <View style={styles.permissionContent}>
+          <View style={styles.cameraIconCircle}>
+            <Text style={styles.cameraIcon}>📷</Text>
+          </View>
+          <Text style={styles.permissionTitle}>Camera Access Required</Text>
+          <Text style={styles.permissionSubtitle}>
+            CarScan uses live camera feed at 30 FPS to guide alignment and
+            capture clear vehicle damage frames.
+          </Text>
+          <TouchableOpacity
+            style={styles.permissionButton}
+            onPress={requestPermission}
+            testID="grant-permission-button"
+            activeOpacity={0.8}>
+            <Text style={styles.permissionButtonText}>
+              Grant Camera Permission
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.backLink}
+            onPress={() => navigation.goBack()}
+            testID="permission-back-button"
+            activeOpacity={0.7}>
+            <Text style={styles.backLinkText}>Go Back</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
+  return (
+    <CarScanViewBase
+      uiState={uiState}
+      capturedPhotoUri={capturedPhotoUri}
+      torchOn={torchOn}
+      errorMessage={errorMessage}
+      onToggleTorch={() => setTorchOn(prev => !prev)}
+      onCapture={handleCapture}
+      onRetake={handleRetake}
+      onAnalyse={handleAnalyse}
+      onGoBack={() => navigation.goBack()}>
+      <CameraView
+        ref={expoCameraRef}
+        style={StyleSheet.absoluteFill}
+        facing="back"
+        enableTorch={torchOn}
+        mode="picture"
+      />
+    </CarScanViewBase>
+  );
+}
+
+/**
+ * Native implementation using react-native-vision-camera
+ */
+function VisionCarScanView({onCaptureCompleted}: CarScanScreenProps) {
+  const navigation = useNavigation<Nav>();
+  const [uiState, setUiState] = useState<CarScanState>('idle');
+  const [capturedPhotoUri, setCapturedPhotoUri] = useState<string | null>(null);
+  const [torchOn, setTorchOn] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const {hasPermission, requestPermission} = useCameraPermission();
+  const device = useCameraDevice('back');
+  const photoOutput = usePhotoOutput();
+  const cameraRef = useRef<any>(null);
+
   const handleCapture = useCallback(async () => {
     if (uiState !== 'idle') {
       return;
@@ -94,13 +353,7 @@ export default function CarScanScreen({
 
       let savedFilePath: string | null = null;
 
-      if (isExpoGo && expoCameraRef.current?.takePictureAsync) {
-        const photo = await expoCameraRef.current.takePictureAsync({
-          quality: 0.9,
-          skipProcessing: false,
-        });
-        savedFilePath = photo?.uri || null;
-      } else if (photoOutput?.capturePhotoToFile) {
+      if (photoOutput?.capturePhotoToFile) {
         const photoFile = await photoOutput.capturePhotoToFile(
           {
             flashMode: torchOn ? 'on' : 'off',
@@ -119,14 +372,7 @@ export default function CarScanScreen({
         );
         savedFilePath = await photo.saveToTemporaryFileAsync();
         (photo as any)?.dispose?.();
-      } else if (expoCameraRef.current?.takePictureAsync) {
-        const photo = await expoCameraRef.current.takePictureAsync({
-          quality: 0.9,
-          skipProcessing: false,
-        });
-        savedFilePath = photo?.uri || null;
       } else {
-        // Fallback for mock/test environments without native photoOutput
         savedFilePath = '/tmp/simulated_frame.jpg';
       }
 
@@ -151,36 +397,29 @@ export default function CarScanScreen({
     }
   }, [uiState, photoOutput, torchOn]);
 
-  // Retake action: discard freeze frame and return to live camera stream
   const handleRetake = useCallback(() => {
     setCapturedPhotoUri(null);
     setErrorMessage(null);
     setUiState('idle');
   }, []);
 
-  // Analyse action: proceed with captured photo
   const handleAnalyse = useCallback(() => {
     if (!capturedPhotoUri) {
       return;
     }
-
     if (onCaptureCompleted) {
       onCaptureCompleted(capturedPhotoUri);
       return;
     }
-
     navigation.navigate('ImagePreview', {
       imageUri: capturedPhotoUri,
       mediaType: 'image',
     });
   }, [capturedPhotoUri, onCaptureCompleted, navigation]);
 
-  // Permission request screen
   if (!hasPermission) {
     return (
-      <View
-        style={styles.permissionContainer}
-        testID="permission-container">
+      <View style={styles.permissionContainer} testID="permission-container">
         <StatusBar style="light" />
         <View style={styles.permissionContent}>
           <View style={styles.cameraIconCircle}>
@@ -193,7 +432,7 @@ export default function CarScanScreen({
           </Text>
           <TouchableOpacity
             style={styles.permissionButton}
-            onPress={handleRequestPermission}
+            onPress={requestPermission}
             testID="grant-permission-button"
             activeOpacity={0.8}>
             <Text style={styles.permissionButtonText}>
@@ -212,12 +451,9 @@ export default function CarScanScreen({
     );
   }
 
-  // Camera device unavailable fallback (e.g. simulator)
-  if (!device && !isExpoGo && uiState !== 'captured') {
+  if (!device && uiState !== 'captured') {
     return (
-      <View
-        style={styles.permissionContainer}
-        testID="no-device-container">
+      <View style={styles.permissionContainer} testID="no-device-container">
         <StatusBar style="light" />
         <View style={styles.permissionContent}>
           <Text style={styles.permissionTitle}>Camera Device Unavailable</Text>
@@ -250,160 +486,34 @@ export default function CarScanScreen({
   }
 
   return (
-    <View style={styles.container} testID="car-scan-screen">
-      <StatusBar style="light" />
-
-      {/* 1. Camera View or Freeze Frame */}
-      {uiState === 'captured' && capturedPhotoUri ? (
-        // STATE 3: Freeze frame of captured still photo
-        <Image
-          source={{uri: capturedPhotoUri}}
-          style={StyleSheet.absoluteFill}
-          resizeMode="cover"
-          testID="captured-freeze-frame"
-        />
-      ) : (
-        // STATE 1 & 2: Live camera stream (30 FPS)
-        <View style={StyleSheet.absoluteFill} testID="vision-camera-view">
-          {isExpoGo ? (
-            <CameraView
-              ref={expoCameraRef}
-              style={StyleSheet.absoluteFill}
-              facing="back"
-              enableTorch={torchOn}
-              mode="picture"
-            />
-          ) : (
-            <Camera
-              ref={visionCameraRef}
-              style={StyleSheet.absoluteFill}
-              device={device || 'back'}
-              isActive={uiState === 'idle' || uiState === 'scanning'}
-              outputs={[photoOutput]}
-              constraints={[{fps: 30}]}
-              torchMode={torchOn ? 'on' : 'off'}
-            />
-          )}
-        </View>
-      )}
-
-      {/* 2. Semi-transparent Car Silhouette Overlay (visible during idle) */}
-      <CarSilhouetteGuide
-        visible={uiState === 'idle'}
-        guideText="Align vehicle within guide"
+    <CarScanViewBase
+      uiState={uiState}
+      capturedPhotoUri={capturedPhotoUri}
+      torchOn={torchOn}
+      errorMessage={errorMessage}
+      onToggleTorch={() => setTorchOn(prev => !prev)}
+      onCapture={handleCapture}
+      onRetake={handleRetake}
+      onAnalyse={handleAnalyse}
+      onGoBack={() => navigation.goBack()}>
+      <Camera
+        ref={cameraRef}
+        style={StyleSheet.absoluteFill}
+        device={device || 'back'}
+        isActive={uiState === 'idle' || uiState === 'scanning'}
+        outputs={[photoOutput]}
+        constraints={[{fps: 30}]}
+        torchMode={torchOn ? 'on' : 'off'}
       />
-
-      {/* 3. Top HUD Controls Bar */}
-      <View style={styles.topHudContainer} pointerEvents="box-none">
-        <View style={styles.topBar}>
-          {/* Back button */}
-          <TouchableOpacity
-            style={styles.hudIconButton}
-            onPress={() => navigation.goBack()}
-            testID="car-scan-back"
-            activeOpacity={0.7}>
-            <Text style={styles.hudIconText}>✕</Text>
-          </TouchableOpacity>
-
-          {/* Status Indicator Badge */}
-          <View style={styles.statusBadge} testID="scan-state-badge">
-            <View
-              style={[
-                styles.statusDot,
-                uiState === 'idle'
-                  ? styles.statusDotLive
-                  : uiState === 'scanning'
-                  ? styles.statusDotScanning
-                  : styles.statusDotCaptured,
-              ]}
-            />
-            <Text style={styles.statusText}>
-              {uiState === 'idle' && 'LIVE • 30 FPS'}
-              {uiState === 'scanning' && 'SCANNING...'}
-              {uiState === 'captured' && 'FRAME CAPTURED'}
-            </Text>
-          </View>
-
-          {/* Flash / Torch toggle button */}
-          <TouchableOpacity
-            style={[
-              styles.hudIconButton,
-              torchOn && styles.hudIconButtonActive,
-            ]}
-            onPress={() => setTorchOn(prev => !prev)}
-            testID="torch-toggle-button"
-            disabled={uiState === 'captured'}
-            activeOpacity={0.7}>
-            <Text style={styles.hudIconText}>{torchOn ? '⚡' : '💡'}</Text>
-          </TouchableOpacity>
-        </View>
-
-        {errorMessage ? (
-          <View style={styles.errorBanner}>
-            <Text style={styles.errorBannerText}>{errorMessage}</Text>
-          </View>
-        ) : null}
-      </View>
-
-      {/* 4. Scanning State Spinner Overlay */}
-      {uiState === 'scanning' && (
-        <View style={styles.scanningOverlay} testID="scanning-indicator-view">
-          <View style={styles.scanningCard}>
-            <ActivityIndicator size="large" color={colors.accent} />
-            <Text style={styles.scanningTitle}>Capturing Still Frame</Text>
-            <Text style={styles.scanningSubtitle}>
-              Stabilizing vehicle alignment...
-            </Text>
-          </View>
-        </View>
-      )}
-
-      {/* 5. Bottom Controls: State Dependent */}
-      {uiState === 'captured' ? (
-        // STATE 3: Freeze frame action buttons (Retake and Analyse)
-        <View
-          style={styles.bottomBarContainer}
-          pointerEvents="box-none">
-          <View style={styles.actionButtonsRow}>
-            <TouchableOpacity
-              style={styles.retakeButton}
-              onPress={handleRetake}
-              testID="retake-button"
-              activeOpacity={0.8}>
-              <Text style={styles.retakeButtonText}>↺ Retake</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.analyseButton}
-              onPress={handleAnalyse}
-              testID="analyse-button"
-              activeOpacity={0.8}>
-              <Text style={styles.analyseButtonText}>Analyse Damage →</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      ) : (
-        // STATE 1 & 2: Circular Shutter Button fixed at bottom center
-        <View
-          style={styles.shutterContainer}
-          pointerEvents={uiState === 'idle' ? 'auto' : 'none'}>
-          <TouchableOpacity
-            style={styles.shutterOuterRing}
-            onPress={handleCapture}
-            disabled={uiState !== 'idle'}
-            testID="shutter-button"
-            activeOpacity={0.7}>
-            <View
-              style={[
-                styles.shutterInnerCircle,
-                uiState === 'scanning' && styles.shutterInnerDisabled,
-              ]}
-            />
-          </TouchableOpacity>
-        </View>
-      )}
-    </View>
+    </CarScanViewBase>
   );
+}
+
+export default function CarScanScreen(props: CarScanScreenProps) {
+  if (isExpoGo) {
+    return <ExpoGoCarScanView {...props} />;
+  }
+  return <VisionCarScanView {...props} />;
 }
 
 const styles = StyleSheet.create({
