@@ -7,7 +7,16 @@ This project uses the **Expo Managed Workflow** so that it can be previewed live
 ## Features
 
 - **Dashboard**: Primary "Inspect Vehicle" action, empty state for first-time users, and a recent-inspections list with media type indicators.
+- **Live CarScan Camera (`react-native-vision-camera`)**:
+  - **Full-Screen Viewfinder**: 30 FPS live stream directly on Android device.
+  - **Semi-Transparent Silhouette Guide**: Vector SVG vehicle profile overlay with framing brackets and crosshairs to help align the car before capture.
+  - **Circular Shutter Button**: Fixed bottom-center camera shutter with responsive press feedback.
+  - **Three UI States**:
+    - `idle`: Live 30 FPS camera feed, active alignment guide, and circular shutter button.
+    - `scanning`: Processing state with ActivityIndicator stabilization feedback.
+    - `captured`: Freeze frame display with "Retake" (reverts to live feed) and "Analyse Damage" actions.
 - **Multi-Modal Inspection**:
+  - **Live CarScan Guide**: Full-screen camera viewfinder with real-time alignment guide.
   - **Record Live Video**: Capture a live video stream of vehicle damage (up to 60s, MP4/MOV) with camera permission handling.
   - **Choose Video from Gallery**: Select pre-recorded vehicle videos from media library.
   - **Take Photo with Camera**: Instant live photo capture.
