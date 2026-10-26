@@ -1,0 +1,95 @@
+{
+  "pt": {
+    "names": {
+      "0": "Front-Windscreen-Damage",
+      "1": "Headlight-Damage",
+      "2": "Rear-windscreen-Damage",
+      "3": "RunningBoard-Dent",
+      "4": "Sidemirror-Damage",
+      "5": "Signlight-Damage",
+      "6": "Taillight-Damage",
+      "7": "bonnet-dent",
+      "8": "boot-dent",
+      "9": "doorouter-dent",
+      "10": "fender-dent",
+      "11": "front-bumper-dent",
+      "12": "pillar-dent",
+      "13": "quaterpanel-dent",
+      "14": "rear-bumper-dent",
+      "15": "roof-dent"
+    },
+    "nc": 16,
+    "output_boxes_shape": [
+      3,
+      6
+    ],
+    "note": "Ultralytics wrapper, NMS applied internally by .predict()"
+  },
+  "onnx": {
+    "input_name": "images",
+    "input_shape": [
+      1,
+      3,
+      640,
+      640
+    ],
+    "input_type": "tensor(float)",
+    "output_names": [
+      "output0"
+    ],
+    "output_shapes_declared": [
+      [
+        1,
+        20,
+        8400
+      ]
+    ],
+    "output_shapes_actual": [
+      [
+        1,
+        20,
+        8400
+      ]
+    ],
+    "note": "raw output, shape (1, 4+nc, num_anchors) -> NMS NOT embedded, needs decode"
+  },
+  "tflite": {
+    "input_details": [
+      {
+        "shape": [
+          1,
+          3,
+          640,
+          640
+        ],
+        "dtype": "<class 'numpy.float32'>",
+        "quant": [
+          0.0,
+          0
+        ]
+      }
+    ],
+    "output_details": [
+      {
+        "shape": [
+          1,
+          20,
+          8400
+        ],
+        "dtype": "<class 'numpy.float32'>",
+        "quant": [
+          0.0,
+          0
+        ]
+      }
+    ],
+    "output_shapes_actual": [
+      [
+        1,
+        20,
+        8400
+      ]
+    ],
+    "note": "raw output similarly shaped, NMS NOT embedded unless shape indicates otherwise"
+  }
+}

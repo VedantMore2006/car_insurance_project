@@ -1,0 +1,18 @@
+# OS / editor
+.DS_Store
+*.swp
+
+# Node / React Native (android app manages its own detailed .gitignore too)
+android/CarDamageDetection/node_modules/
+android/CarDamageDetection/android/.gradle/
+android/CarDamageDetection/android/app/build/
+android/CarDamageDetection/android/build/
+android/CarDamageDetection/ios/Pods/
+android/CarDamageDetection/.env
+
+# Python
+__pycache__/
+*.pyc
+
+# Extracted benchmark bundle (keep the zip, skip the extracted copy from VCS to avoid duplicating large data)
+backend/benchmark/car_damage_benchmark_bundle/

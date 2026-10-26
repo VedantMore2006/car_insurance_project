@@ -1,0 +1,3 @@
+pair,total_ref_detections,pct_ref_matched,class_agreement_rate_among_matches,mean_abs_conf_diff,mean_abs_box_coord_diff_px,mean_iou_complement_among_matches,count_in_ref_missing_in_other,count_in_other_not_in_ref
+onnx_vs_pt,82,100.0,100.0,5.597021521591559e-07,0.0014436751717646524,3.3596954499240045e-05,0,0
+tflite_vs_pt,82,100.0,100.0,6.429305890711343e-07,0.0014438446861006068,3.360343368495916e-05,0,0

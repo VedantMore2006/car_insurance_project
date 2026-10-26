@@ -1,0 +1,38 @@
+{
+  "conda_env": "project_env",
+  "python_version": "3.12.13",
+  "os": "Linux IdeaPad 7.2.10-zen1-1-zen #1 ZEN SMP PREEMPT_DYNAMIC Mon, 12 Oct 2026 07:00:29 +0000 x86_64 GNU/Linux",
+  "cpu_model": "Intel(R) Core(TM) i5-10210U CPU @ 1.60GHz, 4 cores / 8 threads",
+  "key_packages": {
+    "torch": "2.2.2+cpu",
+    "torchvision": "0.17.2+cpu (installed during this session, see notes)",
+    "ultralytics": "8.4.30",
+    "onnx": "1.21.0",
+    "onnxruntime": "1.24.4",
+    "ai-edge-litert": "2.3.0 (installed during this session, see notes)",
+    "numpy": "1.26.4",
+    "opencv-python": "4.13.0.92",
+    "PyYAML": "6.0.3",
+    "psutil": "7.2.2",
+    "tensorflow": "NOT INSTALLED (blocker for ultralytics-native .val() on tflite; custom adapter used instead)"
+  },
+  "installs_performed_this_session": [
+    "python -m pip install ai-edge-litert   # was completely absent; minimal lightweight TFLite/LiteRT CPU runtime, no conflicting deps",
+    "python -m pip install torchvision==0.17.2 --index-url https://download.pytorch.org/whl/cpu   # was completely absent; required by ultralytics/torch NMS ops for .pt and .val(); version pinned to match existing torch==2.2.2+cpu, no upgrade/downgrade of any existing package"
+  ],
+  "thread_settings": {
+    "torch_num_threads_requested": 1,
+    "torch_num_threads_effective_during_pt_benchmark": "7 (ultralytics internals reset thread count on predict(); recorded as observed, not overridden further)",
+    "onnxruntime_intra_op_num_threads": 1,
+    "onnxruntime_inter_op_num_threads": 1,
+    "tflite_interpreter_num_threads": 1,
+    "cv2_setNumThreads": 1
+  },
+  "benchmark_settings": {
+    "imgsz": 640,
+    "batch": 1,
+    "conf": 0.25,
+    "iou": 0.70,
+    "device": "cpu"
+  }
+}
