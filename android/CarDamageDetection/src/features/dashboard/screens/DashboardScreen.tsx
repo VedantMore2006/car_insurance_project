@@ -41,8 +41,9 @@ export default function DashboardScreen() {
       />
       <View style={styles.section}>
         <Text style={styles.intro}>
-          Capture a vehicle photo and run it through the damage detection model
-          to identify affected areas before logging an inspection.
+          Capture a vehicle photo or video stream and run it through the
+          damage detection model to identify affected areas before logging an
+          inspection.
         </Text>
         <AppButton
           title="Inspect Vehicle"

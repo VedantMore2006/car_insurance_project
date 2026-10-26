@@ -6,8 +6,10 @@ import ScreenContainer from '../../../components/ScreenContainer';
 import AppHeader from '../../../components/AppHeader';
 import AppButton from '../../../components/AppButton';
 import ImagePreview from '../../../components/ImagePreview';
-import {colors, spacing, typography} from '../../../config/theme';
+import VideoPreview from '../../../components/VideoPreview';
+import {colors, radius, spacing, typography} from '../../../config/theme';
 import {InspectionStackParamList} from '../../../app/navigation/navigationTypes';
+import {formatDuration} from '../../../utils/formatters';
 
 type Nav = NativeStackNavigationProp<InspectionStackParamList, 'ImagePreview'>;
 type Rt = RouteProp<InspectionStackParamList, 'ImagePreview'>;
@@ -15,32 +17,57 @@ type Rt = RouteProp<InspectionStackParamList, 'ImagePreview'>;
 export default function ImagePreviewScreen() {
   const navigation = useNavigation<Nav>();
   const route = useRoute<Rt>();
-  const {imageUri, width, height} = route.params;
+  const {imageUri, width, height, mediaType = 'image', duration} = route.params;
+  const isVideo = mediaType === 'video';
 
   return (
     <ScreenContainer scroll>
       <AppHeader
-        title="Preview"
-        subtitle="Confirm this is the photo you want to analyze"
+        title={isVideo ? 'Video Preview' : 'Photo Preview'}
+        subtitle={`Confirm this is the ${isVideo ? 'video' : 'photo'} you want to analyze`}
       />
       <View style={styles.content}>
-        <ImagePreview uri={imageUri} />
-        {width && height ? (
-          <Text style={styles.dimensions}>
-            {width} x {height} px
-          </Text>
+        {isVideo ? (
+          <VideoPreview uri={imageUri} duration={duration} />
         ) : (
-          <Text style={styles.dimensions}>Dimensions unavailable</Text>
+          <ImagePreview uri={imageUri} />
         )}
+
+        <View style={styles.metaRow}>
+          <View style={styles.badge}>
+            <Text style={styles.badgeText}>
+              {isVideo ? 'VIDEO STREAM' : 'STILL PHOTO'}
+            </Text>
+          </View>
+          {width && height ? (
+            <Text style={styles.dimensions}>
+              {width} x {height} px
+            </Text>
+          ) : (
+            <Text style={styles.dimensions}>Dimensions unavailable</Text>
+          )}
+          {isVideo && duration ? (
+            <Text style={styles.durationText}>
+              Duration: {formatDuration(duration)}
+            </Text>
+          ) : null}
+        </View>
+
         <AppButton
-          title="Analyze Damage"
+          title={isVideo ? 'Analyze Video Damage' : 'Analyze Damage'}
           onPress={() =>
-            navigation.navigate('DetectionProgress', {imageUri, width, height})
+            navigation.navigate('DetectionProgress', {
+              imageUri,
+              width,
+              height,
+              mediaType,
+              duration,
+            })
           }
           testID="analyze-damage-button"
         />
         <AppButton
-          title="Replace Photo"
+          title={isVideo ? 'Replace Video' : 'Replace Photo'}
           variant="secondary"
           onPress={() => navigation.navigate('ImageSelection')}
           style={styles.secondaryButton}
@@ -57,11 +84,35 @@ export default function ImagePreviewScreen() {
 }
 
 const styles = StyleSheet.create({
-  content: {paddingHorizontal: spacing.lg, gap: spacing.md},
+  content: {paddingHorizontal: spacing.lg, paddingBottom: spacing.xl, gap: spacing.md},
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    flexWrap: 'wrap',
+  },
+  badge: {
+    backgroundColor: colors.surfaceAlt,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: 2,
+    borderRadius: radius.sm,
+  },
+  badgeText: {
+    ...typography.caption,
+    color: colors.accent,
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
   dimensions: {
     ...typography.caption,
     color: colors.textMuted,
-    textAlign: 'center',
+  },
+  durationText: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    fontWeight: '500',
   },
   secondaryButton: {marginTop: spacing.xs},
 });

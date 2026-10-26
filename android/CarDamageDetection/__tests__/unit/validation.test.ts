@@ -1,5 +1,6 @@
 import {
   validateSelectedImage,
+  validateSelectedMedia,
   isValidApiBaseUrl,
   isValidConfidenceThreshold,
 } from '../../src/utils/validation';
@@ -39,6 +40,52 @@ describe('validateSelectedImage', () => {
   it('rejects when no uri provided', () => {
     const result = validateSelectedImage({});
     expect(result.valid).toBe(false);
+  });
+});
+
+describe('validateSelectedMedia (Video)', () => {
+  it('accepts a valid MP4 video within size and duration limits', () => {
+    const result = validateSelectedMedia({
+      uri: 'content://media/video.mp4',
+      mediaType: 'video',
+      type: 'video/mp4',
+      fileSize: 15 * 1024 * 1024,
+      duration: 25,
+    });
+    expect(result.valid).toBe(true);
+    expect(result.errors).toHaveLength(0);
+  });
+
+  it('rejects an unsupported video format', () => {
+    const result = validateSelectedMedia({
+      uri: 'content://media/video.flv',
+      mediaType: 'video',
+      type: 'video/x-flv',
+    });
+    expect(result.valid).toBe(false);
+    expect(result.errors[0]).toMatch(/Unsupported video format/);
+  });
+
+  it('rejects a video exceeding 100MB', () => {
+    const result = validateSelectedMedia({
+      uri: 'content://media/video.mp4',
+      mediaType: 'video',
+      type: 'video/mp4',
+      fileSize: 120 * 1024 * 1024,
+    });
+    expect(result.valid).toBe(false);
+    expect(result.errors[0]).toMatch(/too large/);
+  });
+
+  it('rejects a video exceeding 60 seconds duration', () => {
+    const result = validateSelectedMedia({
+      uri: 'content://media/video.mp4',
+      mediaType: 'video',
+      type: 'video/mp4',
+      duration: 75,
+    });
+    expect(result.valid).toBe(false);
+    expect(result.errors[0]).toMatch(/too long/);
   });
 });
 

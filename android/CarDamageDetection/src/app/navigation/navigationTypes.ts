@@ -1,10 +1,19 @@
 import {NavigatorScreenParams} from '@react-navigation/native';
+import {MediaType} from '../../types/common.types';
+
+export interface InspectionMediaParams {
+  imageUri: string;
+  width?: number;
+  height?: number;
+  mediaType?: MediaType;
+  duration?: number;
+}
 
 export type InspectionStackParamList = {
   ImageSelection: undefined;
-  ImagePreview: {imageUri: string; width?: number; height?: number};
-  DetectionProgress: {imageUri: string; width?: number; height?: number};
-  DetectionResults: {imageUri: string; width?: number; height?: number};
+  ImagePreview: InspectionMediaParams;
+  DetectionProgress: InspectionMediaParams;
+  DetectionResults: InspectionMediaParams;
 };
 
 export type MainTabParamList = {

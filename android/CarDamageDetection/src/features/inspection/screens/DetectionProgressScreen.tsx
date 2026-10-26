@@ -22,7 +22,8 @@ type Rt = RouteProp<InspectionStackParamList, 'DetectionProgress'>;
 export default function DetectionProgressScreen() {
   const navigation = useNavigation<Nav>();
   const route = useRoute<Rt>();
-  const {imageUri} = route.params;
+  const {imageUri, mediaType = 'image'} = route.params;
+  const isVideo = mediaType === 'video';
   const detection = useDetection();
   const hasStarted = useRef(false);
 
@@ -81,11 +82,19 @@ export default function DetectionProgressScreen() {
 
   return (
     <ScreenContainer>
-      <AppHeader title="Analyzing" />
+      <AppHeader title={isVideo ? 'Analyzing Video' : 'Analyzing Photo'} />
       <View style={styles.content}>
-        <LoadingIndicator message="Analyzing photo for damage..." />
+        <LoadingIndicator
+          message={
+            isVideo
+              ? 'Analyzing video stream for damage...'
+              : 'Analyzing photo for damage...'
+          }
+        />
         <Text style={styles.hint}>
-          This may take a few seconds depending on your connection.
+          {isVideo
+            ? 'Sampling and scanning video frames across the stream. This may take a few moments.'
+            : 'This may take a few seconds depending on your connection.'}
         </Text>
         <AppButton
           title="Cancel"

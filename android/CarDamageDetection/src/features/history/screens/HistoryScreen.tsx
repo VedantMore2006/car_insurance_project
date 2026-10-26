@@ -18,7 +18,11 @@ import {
   getHistory,
 } from '../../../services/storage/historyStorage';
 import {HistoryEntry} from '../../../types/common.types';
-import {formatDateTime, formatDetectionCount} from '../../../utils/formatters';
+import {
+  formatDateTime,
+  formatDetectionCount,
+  formatDuration,
+} from '../../../utils/formatters';
 
 export default function HistoryScreen() {
   const [entries, setEntries] = useState<HistoryEntry[]>([]);
@@ -69,7 +73,9 @@ export default function HistoryScreen() {
             <View style={styles.row} testID="history-row">
               {imageErrors[item.id] ? (
                 <View style={[styles.thumbnail, styles.thumbnailFallback]}>
-                  <Text style={styles.thumbnailFallbackText}>No Image</Text>
+                  <Text style={styles.thumbnailFallbackText}>
+                    {item.mediaType === 'video' ? 'Video' : 'Photo'}
+                  </Text>
                 </View>
               ) : (
                 <Image
@@ -81,9 +87,28 @@ export default function HistoryScreen() {
                 />
               )}
               <View style={styles.rowInfo}>
-                <Text style={styles.date}>
-                  {formatDateTime(item.createdAt)}
-                </Text>
+                <View style={styles.dateRow}>
+                  <Text style={styles.date}>
+                    {formatDateTime(item.createdAt)}
+                  </Text>
+                  <View
+                    style={[
+                      styles.typeBadge,
+                      item.mediaType === 'video' && styles.videoBadge,
+                    ]}>
+                    <Text
+                      style={[
+                        styles.typeBadgeText,
+                        item.mediaType === 'video' && styles.videoBadgeText,
+                      ]}>
+                      {item.mediaType === 'video'
+                        ? `VIDEO ${
+                            item.duration ? formatDuration(item.duration) : ''
+                          }`.trim()
+                        : 'PHOTO'}
+                    </Text>
+                  </View>
+                </View>
                 <Text style={styles.count}>
                   {formatDetectionCount(item.detectionCount)}
                 </Text>
@@ -122,7 +147,31 @@ const styles = StyleSheet.create({
   thumbnailFallback: {alignItems: 'center', justifyContent: 'center'},
   thumbnailFallbackText: {...typography.caption, color: colors.textMuted},
   rowInfo: {flex: 1},
+  dateRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    flexWrap: 'wrap',
+  },
   date: {...typography.caption, color: colors.textMuted},
+  typeBadge: {
+    backgroundColor: colors.surfaceAlt,
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    borderRadius: radius.sm,
+  },
+  videoBadge: {
+    backgroundColor: 'rgba(56, 189, 248, 0.15)',
+  },
+  typeBadgeText: {
+    fontSize: 9,
+    fontWeight: '700',
+    color: colors.textMuted,
+    letterSpacing: 0.5,
+  },
+  videoBadgeText: {
+    color: colors.accent,
+  },
   count: {...typography.body, color: colors.textPrimary},
   status: {...typography.caption, color: colors.textSecondary},
   delete: {...typography.caption, color: colors.danger, fontWeight: '600'},

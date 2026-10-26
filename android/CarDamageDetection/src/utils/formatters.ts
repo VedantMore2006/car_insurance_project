@@ -39,3 +39,14 @@ export function formatDetectionCount(count: number): string {
     ? '1 damage area detected'
     : `${count} damage areas detected`;
 }
+
+export function formatDuration(duration?: number): string {
+  if (duration === undefined || duration === null || duration < 0) {
+    return '0:00';
+  }
+  const totalSeconds =
+    duration > 100 ? Math.round(duration / 1000) : Math.round(duration);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+}

@@ -31,6 +31,15 @@ function guessMimeType(uri: string): string {
   if (lower.endsWith('.webp')) {
     return 'image/webp';
   }
+  if (lower.endsWith('.mp4')) {
+    return 'video/mp4';
+  }
+  if (lower.endsWith('.mov')) {
+    return 'video/quicktime';
+  }
+  if (lower.endsWith('.webm')) {
+    return 'video/webm';
+  }
   return 'application/octet-stream';
 }
 

@@ -1,24 +1,32 @@
 # Car Damage Detection
 
-React Native (Expo Managed Workflow, TypeScript) Android application for inspecting vehicle photos for damage.
+React Native (Expo Managed Workflow, TypeScript) Android application for inspecting vehicle photos and video streams for damage.
 
-This project was migrated from plain React Native CLI to **Expo** so that it can be previewed live on a physical Android device via the **Expo Go** sandbox app without requiring a local Android SDK or Gradle build toolchain.
+This project uses the **Expo Managed Workflow** so that it can be previewed live on a physical Android device via the **Expo Go** sandbox app without requiring a local Android SDK or Gradle build toolchain.
 
 ## Features
 
-- **Dashboard**: Primary "Inspect Vehicle" action, empty state for first-time users, and a real recent-inspections list.
-- **Photo Selection**: Gallery picker via `expo-image-picker` with runtime gallery permission request (no camera permissions requested). Validates file formats (JPEG, PNG), dimensions, and size (up to 20MB).
-- **Photo Preview**: Displays selected image, natural dimensions, and replace/cancel actions.
+- **Dashboard**: Primary "Inspect Vehicle" action, empty state for first-time users, and a recent-inspections list with media type indicators.
+- **Multi-Modal Inspection**:
+  - **Record Live Video**: Capture a live video stream of vehicle damage (up to 60s, MP4/MOV) with camera permission handling.
+  - **Choose Video from Gallery**: Select pre-recorded vehicle videos from media library.
+  - **Take Photo with Camera**: Instant live photo capture.
+  - **Choose Photo from Gallery**: Select high-resolution photos (JPEG, PNG).
+- **Video & Photo Preview**:
+  - Full video playback via `expo-video` with loop and interactive play/pause controls.
+  - Metadata display: dimensions, duration (mm:ss), and media type badges.
+  - Image preview with aspect-ratio containment.
 - **Detection Progress**: Honest lifecycle state machine ("uploading" / "processing"), cancel action, and retry path — no fabricated progress percentage.
 - **Detection Results**: Bounding-box overlays with exact coordinate-scaling math across letterboxed/contained aspect ratios, damage classes + confidence scores, save-to-history, and dashboard navigation.
-- **History**: Local persistence via `@react-native-async-storage/async-storage` (metadata + URI references only; never raw bytes), individual delete with confirmation, and missing-file fallbacks.
+- **History**: Local persistence via `@react-native-async-storage/async-storage` (metadata + URI references only; never raw bytes), individual delete with confirmation, media type badges (`PHOTO` vs `VIDEO`), and duration display.
 - **Settings**: Persistent backend URL configuration, "Test Connection" (`/health`), confidence threshold setting, clear history, and privacy policy note.
 
 ## Technology Stack
 
 - **Framework**: Expo SDK 58 (React Native 0.88, React 19), TypeScript
 - **Navigation**: React Navigation 7 (native-stack + bottom-tabs)
-- **Image Picker**: `expo-image-picker` (media library / gallery only)
+- **Image & Video Capture**: `expo-image-picker` (media library + live camera)
+- **Video Playback**: `expo-video` (`VideoView`, `useVideoPlayer`)
 - **Storage**: `@react-native-async-storage/async-storage`
 - **Testing**: Jest + `jest-expo` + `@testing-library/react-native` + `react-test-renderer`
 - **Linting**: ESLint + `eslint-config-expo`
@@ -28,10 +36,10 @@ This project was migrated from plain React Native CLI to **Expo** so that it can
 ```
 src/
   app/            App.tsx, navigation/, providers/
-  components/     Shared presentational components (AppButton, AppHeader, ScreenContainer, etc.)
+  components/     Shared presentational components (AppButton, AppHeader, ImagePreview, VideoPreview, etc.)
   features/
     dashboard/    DashboardScreen
-    inspection/   Image selection -> preview -> progress -> results flow, detectionService,
+    inspection/   Media selection -> preview -> progress -> results flow, detectionService,
                   detection.types.ts, inspectionSession.ts
     history/      HistoryScreen
     settings/     SettingsScreen
@@ -96,6 +104,6 @@ npx tsc --noEmit
 # Lint
 npm run lint
 
-# Test suite (all 40 tests across 9 suites)
+# Test suite (all 46 tests across 10 suites)
 npm test
 ```
