@@ -1,3 +1,4 @@
+import './src/config/nitroShim';
 import { registerRootComponent } from 'expo';
 
 import App from './App';
