@@ -1,0 +1,27 @@
+# CarDD YOLOv8n CPU Benchmark Requirements
+# Base dependencies
+numpy==1.26.4
+scipy==1.17.1
+pillow==12.3.0
+opencv-python==4.13.0.92
+pandas==3.0.1
+matplotlib==3.10.8
+psutil==7.2.2
+
+# PyTorch runtime
+torch==2.2.2+cpu
+torchvision==0.17.2+cpu
+ultralytics==8.4.30
+
+# ONNX runtime
+onnx==1.21.0
+onnxruntime==1.24.4
+onnxslim==0.1.90
+
+# TensorFlow Lite & conversion toolchain
+tensorflow==2.19.0
+tf_keras==2.19.0
+sng4onnx==2.0.1
+onnx_graphsurgeon==0.6.1
+onnx2tf==1.28.8
+ai-edge-litert==2.3.0

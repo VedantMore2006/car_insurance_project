@@ -1,0 +1,125 @@
+{
+  "PyTorch (CPU)": {
+    "runtime": "PyTorch (CPU)",
+    "model_path": "/home/vedant/car_insurance_project/benchmark/cardd_cpu_benchmark/models/best.pt",
+    "model_file_size_mb": 6.2,
+    "cpu_threads": 4,
+    "model_load_time_sec": 0.0885,
+    "cold_start_ms": 198.72,
+    "peak_rss_mb": 432.71,
+    "runs": 3,
+    "total_inferences": 1122,
+    "forward": {
+      "mean_ms": 136.63,
+      "std_ms": 37.52,
+      "median_ms": 121.01,
+      "p90_ms": 186.73,
+      "p95_ms": 218.27,
+      "min_ms": 101.72,
+      "max_ms": 395.87,
+      "fps": 7.32
+    },
+    "preprocessing": {
+      "mean_ms": 5.95,
+      "median_ms": 5.67,
+      "std_ms": 1.33
+    },
+    "postprocessing": {
+      "mean_ms": 1.13,
+      "median_ms": 1.05,
+      "std_ms": 0.25
+    },
+    "end_to_end": {
+      "mean_ms": 143.71,
+      "std_ms": 38.56,
+      "median_ms": 127.99,
+      "p90_ms": 194.65,
+      "p95_ms": 227.56,
+      "min_ms": 107.62,
+      "max_ms": 405.03,
+      "throughput_fps": 6.96
+    }
+  },
+  "ONNX Runtime (CPU EP)": {
+    "runtime": "ONNX Runtime (CPU EP)",
+    "model_path": "/home/vedant/car_insurance_project/benchmark/cardd_cpu_benchmark/models/yolov8n.onnx",
+    "model_file_size_mb": 12.19,
+    "cpu_threads": 4,
+    "model_load_time_sec": 0.1049,
+    "cold_start_ms": 125.12,
+    "peak_rss_mb": 499.77,
+    "runs": 3,
+    "total_inferences": 1122,
+    "forward": {
+      "mean_ms": 96.0,
+      "std_ms": 11.5,
+      "median_ms": 92.68,
+      "p90_ms": 107.54,
+      "p95_ms": 123.22,
+      "min_ms": 82.58,
+      "max_ms": 179.48,
+      "fps": 10.42
+    },
+    "preprocessing": {
+      "mean_ms": 5.5,
+      "median_ms": 5.25,
+      "std_ms": 0.85
+    },
+    "postprocessing": {
+      "mean_ms": 1.16,
+      "median_ms": 1.1,
+      "std_ms": 0.19
+    },
+    "end_to_end": {
+      "mean_ms": 102.66,
+      "std_ms": 11.95,
+      "median_ms": 99.15,
+      "p90_ms": 114.58,
+      "p95_ms": 131.17,
+      "min_ms": 88.46,
+      "max_ms": 188.25,
+      "throughput_fps": 9.74
+    }
+  },
+  "TensorFlow Lite (CPU)": {
+    "runtime": "TensorFlow Lite (CPU)",
+    "model_path": "/home/vedant/car_insurance_project/benchmark/cardd_cpu_benchmark/models/yolov8n.tflite",
+    "model_file_size_mb": 12.2,
+    "cpu_threads": 4,
+    "model_load_time_sec": 0.0919,
+    "cold_start_ms": 74.29,
+    "peak_rss_mb": 486.16,
+    "runs": 3,
+    "total_inferences": 1122,
+    "forward": {
+      "mean_ms": 80.57,
+      "std_ms": 14.25,
+      "median_ms": 73.82,
+      "p90_ms": 101.17,
+      "p95_ms": 105.2,
+      "min_ms": 64.45,
+      "max_ms": 180.25,
+      "fps": 12.41
+    },
+    "preprocessing": {
+      "mean_ms": 3.47,
+      "median_ms": 3.33,
+      "std_ms": 0.48
+    },
+    "postprocessing": {
+      "mean_ms": 1.2,
+      "median_ms": 1.15,
+      "std_ms": 0.2
+    },
+    "end_to_end": {
+      "mean_ms": 85.24,
+      "std_ms": 14.43,
+      "median_ms": 78.54,
+      "p90_ms": 106.19,
+      "p95_ms": 110.14,
+      "min_ms": 68.79,
+      "max_ms": 186.7,
+      "throughput_fps": 11.73
+    }
+  }
+}

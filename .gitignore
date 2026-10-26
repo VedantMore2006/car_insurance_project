@@ -1,16 +1,32 @@
 # OS / editor
 .DS_Store
 *.swp
+*~
 
-# Node / React Native (android app manages its own detailed .gitignore too)
+# Node / React Native / Expo
 android/CarDamageDetection/node_modules/
+android/CarDamageDetection/.expo/
 android/CarDamageDetection/android/.gradle/
 android/CarDamageDetection/android/app/build/
 android/CarDamageDetection/android/build/
 android/CarDamageDetection/ios/Pods/
 android/CarDamageDetection/.env
 
-# Python
+# Python / Caches
 __pycache__/
 *.pyc
+*.pyo
+.pytest_cache/
+
+# Large Datasets and Archives (> 100MB or temporary training artifacts)
+*.zip
+*.npy
+benchmark/*.zip
+benchmark/*.npy
+benchmark/best.onnx
+benchmark/best.pt
+benchmark/cardd_cpu_benchmark/dataset/test/images/
+benchmark/cardd_cpu_benchmark/models/best_saved_model/
+benchmark/cardd_cpu_benchmark/models/best.onnx
+
 

@@ -1,0 +1,42 @@
+{
+  "source_checkpoint": {
+    "path": "/home/vedant/car_insurance_project/benchmark/cardd_cpu_benchmark/models/best.pt",
+    "size_mb": 6.2
+  },
+  "exports": {
+    "onnx": {
+      "path": "/home/vedant/car_insurance_project/benchmark/cardd_cpu_benchmark/models/yolov8n.onnx",
+      "size_mb": 12.19,
+      "duration_sec": 2.76,
+      "input_shape": [
+        1,
+        3,
+        640,
+        640
+      ],
+      "output_shape": [
+        1,
+        10,
+        8400
+      ],
+      "finite_output_verified": true
+    },
+    "tflite": {
+      "path": "/home/vedant/car_insurance_project/benchmark/cardd_cpu_benchmark/models/yolov8n.tflite",
+      "size_mb": 12.2,
+      "duration_sec": 17.87,
+      "input_shape": [
+        1,
+        640,
+        640,
+        3
+      ],
+      "output_shape": [
+        1,
+        10,
+        8400
+      ],
+      "finite_output_verified": true
+    }
+  }
+}

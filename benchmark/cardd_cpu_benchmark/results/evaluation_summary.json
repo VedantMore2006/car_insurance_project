@@ -1,0 +1,428 @@
+{
+  "PyTorch": {
+    "mAP50": 70.56,
+    "mAP50_95": 55.73,
+    "precision": 68.74,
+    "recall": 70.24,
+    "total_gt_instances": 785,
+    "unmatched_gt_boxes": 263,
+    "unmatched_predictions": 294,
+    "per_class": [
+      {
+        "class_id": 0,
+        "class_name": "dent",
+        "gt_instances": 236,
+        "pred_instances": 2399,
+        "precision": 60.26,
+        "recall": 58.47,
+        "f1": 59.35,
+        "ap50": 57.63,
+        "ap50_95": 32.45
+      },
+      {
+        "class_id": 1,
+        "class_name": "scratch",
+        "gt_instances": 307,
+        "pred_instances": 3481,
+        "precision": 50.85,
+        "recall": 58.63,
+        "f1": 54.46,
+        "ap50": 57.3,
+        "ap50_95": 31.96
+      },
+      {
+        "class_id": 2,
+        "class_name": "crack",
+        "gt_instances": 70,
+        "pred_instances": 1795,
+        "precision": 41.33,
+        "recall": 44.29,
+        "f1": 42.76,
+        "ap50": 37.97,
+        "ap50_95": 21.77
+      },
+      {
+        "class_id": 3,
+        "class_name": "glass shatter",
+        "gt_instances": 71,
+        "pred_instances": 174,
+        "precision": 88.46,
+        "recall": 97.18,
+        "f1": 92.62,
+        "ap50": 99.07,
+        "ap50_95": 94.16
+      },
+      {
+        "class_id": 4,
+        "class_name": "lamp broken",
+        "gt_instances": 69,
+        "pred_instances": 196,
+        "precision": 81.25,
+        "recall": 75.36,
+        "f1": 78.2,
+        "ap50": 81.51,
+        "ap50_95": 67.06
+      },
+      {
+        "class_id": 5,
+        "class_name": "tire flat",
+        "gt_instances": 32,
+        "pred_instances": 92,
+        "precision": 90.32,
+        "recall": 87.5,
+        "f1": 88.89,
+        "ap50": 89.87,
+        "ap50_95": 86.98
+      }
+    ],
+    "confusion_matrix": [
+      [
+        141,
+        15,
+        0,
+        0,
+        0,
+        0,
+        89
+      ],
+      [
+        9,
+        187,
+        1,
+        1,
+        0,
+        0,
+        115
+      ],
+      [
+        1,
+        2,
+        31,
+        0,
+        0,
+        0,
+        36
+      ],
+      [
+        0,
+        0,
+        0,
+        69,
+        0,
+        0,
+        2
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        52,
+        0,
+        17
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        28,
+        4
+      ],
+      [
+        78,
+        150,
+        43,
+        8,
+        12,
+        3,
+        0
+      ]
+    ]
+  },
+  "ONNX Runtime": {
+    "mAP50": 70.56,
+    "mAP50_95": 55.73,
+    "precision": 68.74,
+    "recall": 70.24,
+    "total_gt_instances": 785,
+    "unmatched_gt_boxes": 263,
+    "unmatched_predictions": 294,
+    "per_class": [
+      {
+        "class_id": 0,
+        "class_name": "dent",
+        "gt_instances": 236,
+        "pred_instances": 2399,
+        "precision": 60.26,
+        "recall": 58.47,
+        "f1": 59.35,
+        "ap50": 57.63,
+        "ap50_95": 32.45
+      },
+      {
+        "class_id": 1,
+        "class_name": "scratch",
+        "gt_instances": 307,
+        "pred_instances": 3481,
+        "precision": 50.85,
+        "recall": 58.63,
+        "f1": 54.46,
+        "ap50": 57.3,
+        "ap50_95": 31.96
+      },
+      {
+        "class_id": 2,
+        "class_name": "crack",
+        "gt_instances": 70,
+        "pred_instances": 1795,
+        "precision": 41.33,
+        "recall": 44.29,
+        "f1": 42.76,
+        "ap50": 37.97,
+        "ap50_95": 21.77
+      },
+      {
+        "class_id": 3,
+        "class_name": "glass shatter",
+        "gt_instances": 71,
+        "pred_instances": 174,
+        "precision": 88.46,
+        "recall": 97.18,
+        "f1": 92.62,
+        "ap50": 99.07,
+        "ap50_95": 94.16
+      },
+      {
+        "class_id": 4,
+        "class_name": "lamp broken",
+        "gt_instances": 69,
+        "pred_instances": 196,
+        "precision": 81.25,
+        "recall": 75.36,
+        "f1": 78.2,
+        "ap50": 81.51,
+        "ap50_95": 67.06
+      },
+      {
+        "class_id": 5,
+        "class_name": "tire flat",
+        "gt_instances": 32,
+        "pred_instances": 92,
+        "precision": 90.32,
+        "recall": 87.5,
+        "f1": 88.89,
+        "ap50": 89.87,
+        "ap50_95": 86.98
+      }
+    ],
+    "confusion_matrix": [
+      [
+        141,
+        15,
+        0,
+        0,
+        0,
+        0,
+        89
+      ],
+      [
+        9,
+        187,
+        1,
+        1,
+        0,
+        0,
+        115
+      ],
+      [
+        1,
+        2,
+        31,
+        0,
+        0,
+        0,
+        36
+      ],
+      [
+        0,
+        0,
+        0,
+        69,
+        0,
+        0,
+        2
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        52,
+        0,
+        17
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        28,
+        4
+      ],
+      [
+        78,
+        150,
+        43,
+        8,
+        12,
+        3,
+        0
+      ]
+    ]
+  },
+  "TensorFlow Lite": {
+    "mAP50": 70.56,
+    "mAP50_95": 55.73,
+    "precision": 68.74,
+    "recall": 70.24,
+    "total_gt_instances": 785,
+    "unmatched_gt_boxes": 263,
+    "unmatched_predictions": 294,
+    "per_class": [
+      {
+        "class_id": 0,
+        "class_name": "dent",
+        "gt_instances": 236,
+        "pred_instances": 2399,
+        "precision": 60.26,
+        "recall": 58.47,
+        "f1": 59.35,
+        "ap50": 57.63,
+        "ap50_95": 32.45
+      },
+      {
+        "class_id": 1,
+        "class_name": "scratch",
+        "gt_instances": 307,
+        "pred_instances": 3481,
+        "precision": 50.85,
+        "recall": 58.63,
+        "f1": 54.46,
+        "ap50": 57.3,
+        "ap50_95": 31.96
+      },
+      {
+        "class_id": 2,
+        "class_name": "crack",
+        "gt_instances": 70,
+        "pred_instances": 1795,
+        "precision": 41.33,
+        "recall": 44.29,
+        "f1": 42.76,
+        "ap50": 37.97,
+        "ap50_95": 21.77
+      },
+      {
+        "class_id": 3,
+        "class_name": "glass shatter",
+        "gt_instances": 71,
+        "pred_instances": 174,
+        "precision": 88.46,
+        "recall": 97.18,
+        "f1": 92.62,
+        "ap50": 99.07,
+        "ap50_95": 94.16
+      },
+      {
+        "class_id": 4,
+        "class_name": "lamp broken",
+        "gt_instances": 69,
+        "pred_instances": 196,
+        "precision": 81.25,
+        "recall": 75.36,
+        "f1": 78.2,
+        "ap50": 81.51,
+        "ap50_95": 67.06
+      },
+      {
+        "class_id": 5,
+        "class_name": "tire flat",
+        "gt_instances": 32,
+        "pred_instances": 92,
+        "precision": 90.32,
+        "recall": 87.5,
+        "f1": 88.89,
+        "ap50": 89.87,
+        "ap50_95": 86.98
+      }
+    ],
+    "confusion_matrix": [
+      [
+        141,
+        15,
+        0,
+        0,
+        0,
+        0,
+        89
+      ],
+      [
+        9,
+        187,
+        1,
+        1,
+        0,
+        0,
+        115
+      ],
+      [
+        1,
+        2,
+        31,
+        0,
+        0,
+        0,
+        36
+      ],
+      [
+        0,
+        0,
+        0,
+        69,
+        0,
+        0,
+        2
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        52,
+        0,
+        17
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        28,
+        4
+      ],
+      [
+        78,
+        150,
+        43,
+        8,
+        12,
+        3,
+        0
+      ]
+    ]
+  }
+}

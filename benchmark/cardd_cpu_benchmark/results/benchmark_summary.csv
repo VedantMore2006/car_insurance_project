@@ -1,0 +1,4 @@
+Runtime,Model Size (MB),Load Time (s),Cold Start (ms),Preprocess Mean (ms),Forward Mean (ms),Forward Median (ms),Forward P90 (ms),Forward P95 (ms),Forward Std (ms),Forward FPS,Postprocess Mean (ms),E2E Mean (ms),E2E Median (ms),E2E P90 (ms),E2E P95 (ms),E2E Std (ms),E2E Throughput (FPS),Peak RSS (MB)
+PyTorch (CPU),6.2,0.0885,198.72,5.95,136.63,121.01,186.73,218.27,37.52,7.32,1.13,143.71,127.99,194.65,227.56,38.56,6.96,432.71
+ONNX Runtime (CPU EP),12.19,0.1049,125.12,5.5,96.0,92.68,107.54,123.22,11.5,10.42,1.16,102.66,99.15,114.58,131.17,11.95,9.74,499.77
+TensorFlow Lite (CPU),12.2,0.0919,74.29,3.47,80.57,73.82,101.17,105.2,14.25,12.41,1.2,85.24,78.54,106.19,110.14,14.43,11.73,486.16

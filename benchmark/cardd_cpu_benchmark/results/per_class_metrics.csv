@@ -1,0 +1,19 @@
+Runtime,Class ID,Class Name,GT Instances,Predictions,Precision (%),Recall (%),F1 Score (%),AP@50 (%),AP@50-95 (%)
+PyTorch,0,dent,236,2399,60.26,58.47,59.35,57.63,32.45
+PyTorch,1,scratch,307,3481,50.85,58.63,54.46,57.3,31.96
+PyTorch,2,crack,70,1795,41.33,44.29,42.76,37.97,21.77
+PyTorch,3,glass shatter,71,174,88.46,97.18,92.62,99.07,94.16
+PyTorch,4,lamp broken,69,196,81.25,75.36,78.2,81.51,67.06
+PyTorch,5,tire flat,32,92,90.32,87.5,88.89,89.87,86.98
+ONNX Runtime,0,dent,236,2399,60.26,58.47,59.35,57.63,32.45
+ONNX Runtime,1,scratch,307,3481,50.85,58.63,54.46,57.3,31.96
+ONNX Runtime,2,crack,70,1795,41.33,44.29,42.76,37.97,21.77
+ONNX Runtime,3,glass shatter,71,174,88.46,97.18,92.62,99.07,94.16
+ONNX Runtime,4,lamp broken,69,196,81.25,75.36,78.2,81.51,67.06
+ONNX Runtime,5,tire flat,32,92,90.32,87.5,88.89,89.87,86.98
+TensorFlow Lite,0,dent,236,2399,60.26,58.47,59.35,57.63,32.45
+TensorFlow Lite,1,scratch,307,3481,50.85,58.63,54.46,57.3,31.96
+TensorFlow Lite,2,crack,70,1795,41.33,44.29,42.76,37.97,21.77
+TensorFlow Lite,3,glass shatter,71,174,88.46,97.18,92.62,99.07,94.16
+TensorFlow Lite,4,lamp broken,69,196,81.25,75.36,78.2,81.51,67.06
+TensorFlow Lite,5,tire flat,32,92,90.32,87.5,88.89,89.87,86.98
