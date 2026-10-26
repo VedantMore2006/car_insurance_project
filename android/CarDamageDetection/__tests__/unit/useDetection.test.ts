@@ -1,4 +1,4 @@
-import {renderHook, act, waitFor} from '@testing-library/react-native';
+import {renderHook, act} from '@testing-library/react-native';
 import useDetection from '../../src/hooks/useDetection';
 import httpDetectionService from '../../src/features/inspection/services/detectionService';
 import {DetectionServiceError} from '../../src/features/inspection/types/detection.types';
@@ -20,7 +20,7 @@ describe('useDetection', () => {
       image: {width: 10, height: 10},
       detections: [],
     });
-    const {result} = renderHook(() => useDetection());
+    const {result} = await renderHook(() => useDetection());
 
     await act(async () => {
       await result.current.analyze('file:///a.jpg');
@@ -34,7 +34,7 @@ describe('useDetection', () => {
     mockedAnalyze.mockRejectedValue(
       new DetectionServiceError('network', 'no connection'),
     );
-    const {result} = renderHook(() => useDetection());
+    const {result} = await renderHook(() => useDetection());
 
     await act(async () => {
       await result.current.analyze('file:///a.jpg');
@@ -53,21 +53,23 @@ describe('useDetection', () => {
           resolveFirst = resolve;
         }),
     );
-    const {result} = renderHook(() => useDetection());
+    const {result} = await renderHook(() => useDetection());
 
-    act(() => {
-      result.current.analyze('file:///a.jpg');
+    let analyzePromise: Promise<void> | undefined;
+    await act(async () => {
+      analyzePromise = result.current.analyze('file:///a.jpg');
     });
-    await waitFor(() => expect(result.current.state).toBe('uploading'));
+    expect(result.current.state).toBe('uploading');
 
-    act(() => {
-      result.current.analyze('file:///a.jpg'); // duplicate tap while in flight
+    await act(async () => {
+      await result.current.analyze('file:///a.jpg'); // duplicate tap while in flight
     });
 
     expect(mockedAnalyze).toHaveBeenCalledTimes(1);
 
     await act(async () => {
       resolveFirst({image: {width: 1, height: 1}, detections: []});
+      await analyzePromise;
     });
   });
 
@@ -76,7 +78,7 @@ describe('useDetection', () => {
       image: {width: 1, height: 1},
       detections: [],
     });
-    const {result} = renderHook(() => useDetection());
+    const {result} = await renderHook(() => useDetection());
 
     await act(async () => {
       await result.current.analyze('file:///a.jpg');
@@ -94,12 +96,12 @@ describe('useDetection', () => {
       image: {width: 1, height: 1},
       detections: [],
     });
-    const {result} = renderHook(() => useDetection());
+    const {result} = await renderHook(() => useDetection());
 
     await act(async () => {
       await result.current.analyze('file:///a.jpg');
     });
-    act(() => {
+    await act(async () => {
       result.current.reset();
     });
 

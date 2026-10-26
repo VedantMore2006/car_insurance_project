@@ -82,7 +82,7 @@ export default function SettingsScreen() {
         <Text style={styles.label}>Backend URL</Text>
         <Text style={styles.helper}>
           No backend is deployed with this app yet. Enter the URL of a detection
-          server once one is available; "localhost" will NOT work on a physical
+          server once one is available; localhost will NOT work on a physical
           device since it refers to the device itself, not your computer.
         </Text>
         <TextInput

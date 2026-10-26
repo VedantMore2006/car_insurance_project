@@ -1,12 +1,14 @@
 import React from 'react';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import {RootStackParamList} from './navigationTypes';
+import {
+  RootStackParamList,
+  InspectionStackParamList,
+} from './navigationTypes';
 import MainTabNavigator from './MainTabNavigator';
 import ImageSelectionScreen from '../../features/inspection/screens/ImageSelectionScreen';
 import ImagePreviewScreen from '../../features/inspection/screens/ImagePreviewScreen';
 import DetectionProgressScreen from '../../features/inspection/screens/DetectionProgressScreen';
 import DetectionResultsScreen from '../../features/inspection/screens/DetectionResultsScreen';
-import {InspectionStackParamList} from './navigationTypes';
 import {colors} from '../../config/theme';
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();

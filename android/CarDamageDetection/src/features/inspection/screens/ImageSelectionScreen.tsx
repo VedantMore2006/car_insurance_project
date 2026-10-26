@@ -1,6 +1,6 @@
 import React, {useState} from 'react';
 import {View, Text, StyleSheet} from 'react-native';
-import {launchImageLibrary} from 'react-native-image-picker';
+import * as ImagePicker from 'expo-image-picker';
 import {useNavigation} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import ScreenContainer from '../../../components/ScreenContainer';
@@ -21,22 +21,23 @@ export default function ImageSelectionScreen() {
 
   const handlePickImage = async () => {
     setErrors([]);
-    const response = await launchImageLibrary({
-      mediaType: 'photo',
-      selectionLimit: 1,
-      includeBase64: false,
+
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      setErrors(['Gallery permission is required to select vehicle photos.']);
+      return;
+    }
+
+    const response = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsMultipleSelection: false,
+      quality: 1,
     });
 
-    if (response.didCancel) {
+    if (response.canceled) {
       return;
     }
-    if (response.errorCode) {
-      setErrors([
-        response.errorMessage ??
-          'Could not open the gallery. Please try again.',
-      ]);
-      return;
-    }
+
     const asset = response.assets?.[0];
     if (!asset?.uri) {
       setErrors(['No image was returned from the gallery.']);
@@ -45,10 +46,10 @@ export default function ImageSelectionScreen() {
 
     const validation = validateSelectedImage({
       uri: asset.uri,
-      type: asset.type,
-      fileSize: asset.fileSize,
-      width: asset.width,
-      height: asset.height,
+      type: asset.mimeType ?? undefined,
+      fileSize: asset.fileSize ?? undefined,
+      width: asset.width ?? undefined,
+      height: asset.height ?? undefined,
     });
 
     if (!validation.valid) {

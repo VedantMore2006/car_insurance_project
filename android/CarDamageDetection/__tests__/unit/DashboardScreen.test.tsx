@@ -5,7 +5,7 @@ import DashboardScreen from '../../src/features/dashboard/screens/DashboardScree
 
 describe('DashboardScreen', () => {
   it('renders the app name and empty recent-inspections state for a first-time user', async () => {
-    const {getByText} = render(
+    const {getByText} = await render(
       <NavigationContainer>
         <DashboardScreen />
       </NavigationContainer>,
