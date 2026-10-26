@@ -14,5 +14,3 @@ android/CarDamageDetection/.env
 __pycache__/
 *.pyc
 
-# Extracted benchmark bundle (keep the zip, skip the extracted copy from VCS to avoid duplicating large data)
-backend/benchmark/car_damage_benchmark_bundle/

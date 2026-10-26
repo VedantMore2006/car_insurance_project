@@ -5,7 +5,7 @@ Not implemented yet. This folder currently holds model artifacts and benchmark r
 ## Contents
 
 - `model/` — exported YOLOv8n car-damage-detection checkpoints: `best.pt` (PyTorch), `best.onnx`, `best.tflite`. Do not modify or retrain these.
-- `benchmark/` — CPU latency/accuracy benchmark results comparing the three export formats (`benchmark_results/`), the validation dataset bundle used for benchmarking (`car_damage_benchmark_bundle/`, `car_damage_benchmark_bundle.zip`), and raw Ultralytics run logs (`runs/`). See `benchmark/benchmark_results/benchmark_report.md` for full methodology and the deployment-format recommendation (PyTorch recommended primary, ONNX as fallback; TFLite needs re-validation).
+- `benchmark/` — CPU latency/accuracy benchmark results comparing the three export formats (`benchmark_results/`) and raw Ultralytics run logs (`runs/`). See `benchmark/benchmark_results/benchmark_report.md` for full methodology and the deployment-format recommendation (PyTorch recommended primary, ONNX as fallback; TFLite needs re-validation). The validation dataset bundle used for that benchmark has been removed — new models are being trained, so it's no longer relevant.
 
 ## Planned
 
