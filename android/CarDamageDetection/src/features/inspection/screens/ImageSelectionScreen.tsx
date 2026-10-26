@@ -125,6 +125,24 @@ export default function ImageSelectionScreen() {
           </View>
         )}
 
+        {/* Live Vision Camera CarScan Section */}
+        <View style={styles.cardSection}>
+          <View style={styles.cardHeader}>
+            <Text style={[styles.sectionBadge, styles.liveBadge]}>LIVE 30 FPS</Text>
+            <Text style={styles.cardTitle}>CarScan Camera Guide</Text>
+          </View>
+          <Text style={styles.cardDescription}>
+            Full-screen camera with real-time vehicle silhouette guide and circular shutter button.
+          </Text>
+          <View style={styles.buttonStack}>
+            <AppButton
+              title="Launch CarScan Screen"
+              onPress={() => navigation.navigate('CarScan')}
+              testID="launch-car-scan-button"
+            />
+          </View>
+        </View>
+
         {/* Video stream section */}
         <View style={styles.cardSection}>
           <View style={styles.cardHeader}>
@@ -230,6 +248,10 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     borderRadius: radius.sm,
     letterSpacing: 0.5,
+  },
+  liveBadge: {
+    color: colors.success,
+    backgroundColor: 'rgba(46, 204, 113, 0.15)',
   },
   cardTitle: {
     ...typography.h3,

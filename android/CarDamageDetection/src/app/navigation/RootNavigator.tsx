@@ -9,6 +9,7 @@ import ImageSelectionScreen from '../../features/inspection/screens/ImageSelecti
 import ImagePreviewScreen from '../../features/inspection/screens/ImagePreviewScreen';
 import DetectionProgressScreen from '../../features/inspection/screens/DetectionProgressScreen';
 import DetectionResultsScreen from '../../features/inspection/screens/DetectionResultsScreen';
+import CarScanScreen from '../../features/inspection/screens/CarScanScreen';
 import {colors} from '../../config/theme';
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();
@@ -26,6 +27,15 @@ function InspectionNavigator() {
         name="ImageSelection"
         component={ImageSelectionScreen}
         options={{title: 'Select Photo'}}
+      />
+      <InspectionStack.Screen
+        name="CarScan"
+        component={CarScanScreen}
+        options={{
+          headerShown: false,
+          presentation: 'fullScreenModal',
+          animation: 'fade',
+        }}
       />
       <InspectionStack.Screen
         name="ImagePreview"

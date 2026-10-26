@@ -11,6 +11,7 @@ export interface InspectionMediaParams {
 
 export type InspectionStackParamList = {
   ImageSelection: undefined;
+  CarScan: undefined;
   ImagePreview: InspectionMediaParams;
   DetectionProgress: InspectionMediaParams;
   DetectionResults: InspectionMediaParams;
