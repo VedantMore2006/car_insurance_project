@@ -85,9 +85,9 @@ npx expo install @react-native-async-storage/async-storage
 - Re-confirm `android.package` / applicationId stays `com.cardamagedetection` so this isn't an accidental rename of the app's identity.
 
 ## Definition of done
-- [ ] New Expo-based project replaces the RN CLI one at `android/CarDamageDetection/`, old RN CLI version recoverable from git history on `master` if needed.
-- [ ] `expo-image-picker` fully replaces `react-native-image-picker`; gallery permission requested correctly; no camera permission requested.
-- [ ] `npx tsc --noEmit` clean, lint clean (same baseline as before), all 40+ tests passing (with the picker mock updated).
-- [ ] `npx expo start` + Expo Go on the real Android phone confirmed working end-to-end through Dashboard → Image Selection → Preview → History → Settings, with Detection Progress/Results correctly showing the "no backend yet" state.
-- [ ] `README.md` updated to describe the Expo-based run instructions (`npx expo start`, Expo Go) instead of the old `npx react-native run-android` instructions, and to note the `expo prebuild`/`eas build` path for a future standalone APK.
-- [ ] A short completion report listing exact files changed, exact commands run, and actual verified outcomes (not assumed) — same rigor as the original `PHASE_ONE_REPORT.md`.
+- [x] New Expo-based project replaces the RN CLI one at `android/CarDamageDetection/`, old RN CLI version recoverable from git history on `master` if needed.
+- [x] `expo-image-picker` fully replaces `react-native-image-picker`; gallery permission requested correctly; no camera permission requested.
+- [x] `npx tsc --noEmit` clean, lint clean (same baseline as before), all 40+ tests passing (with the picker mock updated).
+- [ ] `npx expo start` + Expo Go on the real Android phone confirmed working end-to-end through Dashboard → Image Selection → Preview → History → Settings, with Detection Progress/Results correctly showing the "no backend yet" state (Metro bundling verified clean; ready for on-device scan).
+- [x] `README.md` updated to describe the Expo-based run instructions (`npx expo start`, Expo Go) instead of the old `npx react-native run-android` instructions, and to note the `expo prebuild`/`eas build` path for a future standalone APK.
+- [x] A short completion report listing exact files changed, exact commands run, and actual verified outcomes (not assumed) — see `android/EXPO_MIGRATION_REPORT.md`.
