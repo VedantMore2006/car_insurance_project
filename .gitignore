@@ -20,6 +20,7 @@ __pycache__/
 backend/.env
 backend/.env.local
 .env
+api_testing.md
 
 # Large Datasets and Archives (> 100MB or temporary training artifacts)
 *.zip
