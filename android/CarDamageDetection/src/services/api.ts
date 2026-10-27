@@ -1,6 +1,6 @@
 import {AxiosInstance, AxiosError, create as createAxiosInstance} from 'axios';
 import {Platform} from 'react-native';
-import {getApiBaseUrl, getApiKey} from './api/apiConfig';
+import {getApiBaseUrl, getApiKey, DEFAULT_API_KEY} from './api/apiConfig';
 
 export interface BoundingBox {
   x1: number;
@@ -38,8 +38,7 @@ export interface PredictOptions {
 export const NGROK_BASE_URL = 'http://88.222.212.15:7000';
 export const LIVE_VPS_BASE_URL = 'http://88.222.212.15:7000';
 export const FALLBACK_HF_URL = 'https://cardd-damage-detection.hf.space';
-export const DEFAULT_API_KEY =
-  '***REMOVED-LEAKED-API-KEY***';
+export {DEFAULT_API_KEY} from './api/apiConfig';
 
 export const TIMEOUT_MS = 15000; // 15-second timeout requirement
 

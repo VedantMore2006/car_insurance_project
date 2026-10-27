@@ -6,7 +6,7 @@
  * README "Backend URL configuration" section). It is intentionally NOT localhost, because on a
  * physical Android device `localhost` resolves to the device itself, not the dev laptop.
  */
-export const DEFAULT_API_BASE_URL = 'https://your-backend.example.com';
+export const DEFAULT_API_BASE_URL = 'http://88.222.212.15:7000';
 
 export const appConfig = {
   appName: 'Car Damage Detection',

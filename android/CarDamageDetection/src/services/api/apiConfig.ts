@@ -22,13 +22,16 @@ export function getApiBaseUrl(): string {
   return overrideBaseUrl ?? appConfig.defaultApiBaseUrl;
 }
 
+export const DEFAULT_API_KEY =
+  '***REMOVED-LEAKED-API-KEY***';
+
 /** Allows SettingsScreen to update the API key used by apiClient at runtime. */
 export function setApiKey(key: string | null): void {
   overrideApiKey = key && key.trim().length > 0 ? key.trim() : null;
 }
 
 export function getApiKey(): string | null {
-  return overrideApiKey;
+  return overrideApiKey ?? DEFAULT_API_KEY;
 }
 
 export function buildUrl(path: string): string {
