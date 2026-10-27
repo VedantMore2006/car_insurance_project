@@ -11,6 +11,7 @@ export const API_ENDPOINTS = {
 } as const;
 
 let overrideBaseUrl: string | null = null;
+let overrideApiKey: string | null = null;
 
 /** Allows SettingsScreen to update the base URL used by apiClient at runtime, after persisting it. */
 export function setApiBaseUrl(url: string | null): void {
@@ -19,6 +20,15 @@ export function setApiBaseUrl(url: string | null): void {
 
 export function getApiBaseUrl(): string {
   return overrideBaseUrl ?? appConfig.defaultApiBaseUrl;
+}
+
+/** Allows SettingsScreen to update the API key used by apiClient at runtime. */
+export function setApiKey(key: string | null): void {
+  overrideApiKey = key && key.trim().length > 0 ? key.trim() : null;
+}
+
+export function getApiKey(): string | null {
+  return overrideApiKey;
 }
 
 export function buildUrl(path: string): string {

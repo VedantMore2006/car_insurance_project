@@ -1,0 +1,30 @@
+services:
+  cardd-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: cardd-inference-backend:latest
+    container_name: cardd-backend
+    restart: unless-stopped
+    ports:
+      - "7000:7000"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=7000
+      - MODEL_PATH=/app/model/yolov8n.tflite
+      - API_KEY=${CARDD_API_KEY:-}
+      - MAX_IMAGE_SIZE_BYTES=26214400
+      - DEFAULT_CONF_THRESHOLD=0.25
+      - DEFAULT_IOU_THRESHOLD=0.45
+      - MAX_DETECTIONS=300
+    deploy:
+      resources:
+        limits:
+          cpus: "4.0"
+          memory: 2G
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7000/health"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+      start_period: 10s

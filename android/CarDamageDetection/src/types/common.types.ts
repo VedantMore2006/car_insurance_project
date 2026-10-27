@@ -4,6 +4,7 @@ export type MediaType = 'image' | 'video';
 export interface AppSettings {
   apiBaseUrl: string;
   confidenceThreshold: number;
+  apiKey?: string;
 }
 
 export interface SelectedMedia {

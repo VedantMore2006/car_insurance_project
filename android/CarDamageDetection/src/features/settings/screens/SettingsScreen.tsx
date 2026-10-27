@@ -9,7 +9,7 @@ import {
   saveSettings,
   clearHistory,
 } from '../../../services/storage/historyStorage';
-import {setApiBaseUrl} from '../../../services/api/apiConfig';
+import {setApiBaseUrl, setApiKey} from '../../../services/api/apiConfig';
 import {
   isValidApiBaseUrl,
   isValidConfidenceThreshold,
@@ -19,6 +19,7 @@ import appConfig from '../../../config/appConfig';
 
 export default function SettingsScreen() {
   const [apiBaseUrl, setApiBaseUrlInput] = useState('');
+  const [apiKey, setApiKeyInput] = useState('');
   const [confidenceThreshold, setConfidenceThreshold] = useState('');
   const [urlError, setUrlError] = useState<string | null>(null);
   const [thresholdError, setThresholdError] = useState<string | null>(null);
@@ -29,6 +30,10 @@ export default function SettingsScreen() {
   useEffect(() => {
     getSettings().then(settings => {
       setApiBaseUrlInput(settings.apiBaseUrl);
+      if (settings.apiKey) {
+        setApiKeyInput(settings.apiKey);
+        setApiKey(settings.apiKey);
+      }
       setConfidenceThreshold(String(settings.confidenceThreshold));
     });
   }, []);
@@ -45,8 +50,13 @@ export default function SettingsScreen() {
       return;
     }
 
-    await saveSettings({apiBaseUrl, confidenceThreshold: thresholdValue});
+    await saveSettings({
+      apiBaseUrl,
+      confidenceThreshold: thresholdValue,
+      apiKey: apiKey.trim() || undefined,
+    });
     setApiBaseUrl(apiBaseUrl);
+    setApiKey(apiKey.trim() || null);
     Alert.alert('Settings saved');
   };
 
@@ -57,6 +67,7 @@ export default function SettingsScreen() {
     }
     setTestStatus('testing');
     setApiBaseUrl(apiBaseUrl);
+    setApiKey(apiKey.trim() || null);
     const healthy = await httpDetectionService.checkHealth();
     setTestStatus(healthy ? 'ok' : 'failed');
   };
@@ -111,6 +122,26 @@ export default function SettingsScreen() {
             Could not reach the backend at this URL.
           </Text>
         )}
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.label}>API Key (Optional / VPS Security)</Text>
+        <Text style={styles.helper}>
+          If your VPS or inference server has API key authentication enabled,
+          enter it here. It will be sent via the X-API-Key header with every
+          detection request.
+        </Text>
+        <TextInput
+          style={styles.input}
+          value={apiKey}
+          onChangeText={setApiKeyInput}
+          placeholder="e.g. cardd_secret_key_..."
+          placeholderTextColor={colors.textMuted}
+          autoCapitalize="none"
+          autoCorrect={false}
+          secureTextEntry
+          testID="api-key-input"
+        />
       </View>
 
       <View style={styles.section}>

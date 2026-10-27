@@ -1,4 +1,5 @@
 import appConfig from '../../config/appConfig';
+import {getApiKey} from './apiConfig';
 
 export interface ApiClientErrorInfo {
   kind: 'network' | 'timeout' | 'server' | 'parse' | 'cancelled';
@@ -49,9 +50,14 @@ export async function getJson<T>(
   options: RequestOptions = {},
 ): Promise<T> {
   const timeoutMs = options.timeoutMs ?? appConfig.requestTimeoutMs;
+  const headers: Record<string, string> = {};
+  const apiKey = getApiKey();
+  if (apiKey) {
+    headers['X-API-Key'] = apiKey;
+  }
   try {
     const response = await withTimeout(
-      signal => fetch(url, {method: 'GET', signal}),
+      signal => fetch(url, {method: 'GET', headers, signal}),
       timeoutMs,
       options.signal,
     );
@@ -67,12 +73,18 @@ export async function postMultipart<T>(
   options: RequestOptions = {},
 ): Promise<T> {
   const timeoutMs = options.timeoutMs ?? appConfig.requestTimeoutMs;
+  const headers: Record<string, string> = {};
+  const apiKey = getApiKey();
+  if (apiKey) {
+    headers['X-API-Key'] = apiKey;
+  }
   try {
     const response = await withTimeout(
       signal =>
         fetch(url, {
           method: 'POST',
           body: formData,
+          headers,
           signal,
         }),
       timeoutMs,

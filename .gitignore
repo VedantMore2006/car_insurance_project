@@ -17,6 +17,9 @@ __pycache__/
 *.pyc
 *.pyo
 .pytest_cache/
+backend/.env
+backend/.env.local
+.env
 
 # Large Datasets and Archives (> 100MB or temporary training artifacts)
 *.zip
