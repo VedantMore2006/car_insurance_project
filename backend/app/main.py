@@ -113,6 +113,16 @@ async def health_check():
     response_model=DetectionResponse,
     status_code=status.HTTP_200_OK,
 )
+@app.post(
+    "/predict",
+    response_model=DetectionResponse,
+    status_code=status.HTTP_200_OK,
+)
+@app.post(
+    "/api/v1/predict",
+    response_model=DetectionResponse,
+    status_code=status.HTTP_200_OK,
+)
 async def detect_damage(
     image: UploadFile = File(..., description="Vehicle image file (JPEG, PNG, WebP)"),
     confidenceThreshold: Optional[float] = Form(

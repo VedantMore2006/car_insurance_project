@@ -22,6 +22,8 @@ import {useNavigation} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {InspectionStackParamList} from '../../../app/navigation/navigationTypes';
 import CarSilhouetteGuide from '../components/CarSilhouetteGuide';
+import {predictDamage, DamagePredictionResult} from '../../../services/api';
+import {setSessionResult} from '../inspectionSession';
 import {colors, spacing, radius, typography} from '../../../config/theme';
 
 export type CarScanState = 'idle' | 'scanning' | 'captured';
@@ -42,11 +44,15 @@ interface CarScanViewBaseProps {
   uiState: CarScanState;
   capturedPhotoUri: string | null;
   torchOn: boolean;
+  isAnalyzing: boolean;
   errorMessage: string | null;
+  noDamageDetected: boolean;
+  detectedDamageResult: DamagePredictionResult | null;
   onToggleTorch: () => void;
   onCapture: () => void;
   onRetake: () => void;
   onAnalyse: () => void;
+  onProceedAnyway?: () => void;
   onGoBack: () => void;
   children: React.ReactNode;
 }
@@ -58,11 +64,15 @@ function CarScanViewBase({
   uiState,
   capturedPhotoUri,
   torchOn,
+  isAnalyzing,
   errorMessage,
+  noDamageDetected,
+  detectedDamageResult,
   onToggleTorch,
   onCapture,
   onRetake,
   onAnalyse,
+  onProceedAnyway,
   onGoBack,
   children,
 }: CarScanViewBaseProps) {
@@ -111,13 +121,20 @@ function CarScanViewBase({
                   ? styles.statusDotLive
                   : uiState === 'scanning'
                   ? styles.statusDotScanning
+                  : isAnalyzing
+                  ? styles.statusDotScanning
                   : styles.statusDotCaptured,
               ]}
             />
             <Text style={styles.statusText}>
               {uiState === 'idle' && 'LIVE • 30 FPS'}
-              {uiState === 'scanning' && 'SCANNING...'}
-              {uiState === 'captured' && 'FRAME CAPTURED'}
+              {uiState === 'scanning' && 'CAPTURING...'}
+              {uiState === 'captured' &&
+                (isAnalyzing
+                  ? 'ANALYZING...'
+                  : noDamageDetected
+                  ? 'NO DAMAGE FOUND'
+                  : 'FRAME CAPTURED')}
             </Text>
           </View>
 
@@ -135,14 +152,24 @@ function CarScanViewBase({
           </TouchableOpacity>
         </View>
 
+        {/* Network Error Banner with Retry Button */}
         {errorMessage ? (
-          <View style={styles.errorBanner}>
+          <View style={styles.errorBanner} testID="network-error-banner">
             <Text style={styles.errorBannerText}>{errorMessage}</Text>
+            {uiState === 'captured' && (
+              <TouchableOpacity
+                style={styles.retryButton}
+                onPress={onAnalyse}
+                testID="retry-analyse-button"
+                activeOpacity={0.8}>
+                <Text style={styles.retryButtonText}>↺ Retry Analysis</Text>
+              </TouchableOpacity>
+            )}
           </View>
         ) : null}
       </View>
 
-      {/* 4. Scanning State Spinner Overlay */}
+      {/* 4. Scanning State Spinner Overlay (Frame Capture) */}
       {uiState === 'scanning' && (
         <View style={styles.scanningOverlay} testID="scanning-indicator-view">
           <View style={styles.scanningCard}>
@@ -155,27 +182,81 @@ function CarScanViewBase({
         </View>
       )}
 
-      {/* 5. Bottom Controls: State Dependent */}
-      {uiState === 'captured' ? (
-        <View style={styles.bottomBarContainer} pointerEvents="box-none">
-          <View style={styles.actionButtonsRow}>
-            <TouchableOpacity
-              style={styles.retakeButton}
-              onPress={onRetake}
-              testID="retake-button"
-              activeOpacity={0.8}>
-              <Text style={styles.retakeButtonText}>↺ Retake</Text>
-            </TouchableOpacity>
+      {/* 5. Analyzing State Spinner Overlay (Cloud Inference) */}
+      {isAnalyzing && (
+        <View style={styles.scanningOverlay} testID="analyzing-indicator-view">
+          <View style={styles.scanningCard}>
+            <ActivityIndicator size="large" color={colors.accent} />
+            <Text style={styles.scanningTitle}>Analyzing Vehicle Damage</Text>
+            <Text style={styles.scanningSubtitle}>
+              Running YOLOv8n inference on cloud backend (15s timeout)...
+            </Text>
+          </View>
+        </View>
+      )}
 
+      {/* 6. Empty-Detection Card (No Damage Detected) */}
+      {noDamageDetected && uiState === 'captured' && !isAnalyzing && (
+        <View style={styles.noDamageCard} testID="no-damage-detected-card">
+          <View style={styles.noDamageBadge}>
+            <Text style={styles.noDamageIcon}>✓</Text>
+          </View>
+          <Text style={styles.noDamageTitle}>No Damage Detected</Text>
+          <Text style={styles.noDamageSubtitle}>
+            The YOLOv8n model analyzed this vehicle frame and found no surface
+            dents, scratches, cracks, or fractures exceeding the threshold.
+          </Text>
+          <View style={styles.noDamageActions}>
             <TouchableOpacity
-              style={styles.analyseButton}
-              onPress={onAnalyse}
-              testID="analyse-button"
+              style={styles.noDamageRetakeBtn}
+              onPress={onRetake}
+              testID="no-damage-retake-button"
               activeOpacity={0.8}>
-              <Text style={styles.analyseButtonText}>Analyse Damage →</Text>
+              <Text style={styles.noDamageRetakeText}>↺ Retake Photo</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.noDamageProceedBtn}
+              onPress={onProceedAnyway || onAnalyse}
+              testID="no-damage-proceed-button"
+              activeOpacity={0.8}>
+              <Text style={styles.noDamageProceedText}>View Scan Details →</Text>
             </TouchableOpacity>
           </View>
         </View>
+      )}
+
+      {/* 7. Bottom Controls: State Dependent */}
+      {uiState === 'captured' ? (
+        !noDamageDetected && (
+          <View style={styles.bottomBarContainer} pointerEvents="box-none">
+            <View style={styles.actionButtonsRow}>
+              <TouchableOpacity
+                style={styles.retakeButton}
+                onPress={onRetake}
+                disabled={isAnalyzing}
+                testID="retake-button"
+                activeOpacity={0.8}>
+                <Text style={styles.retakeButtonText}>↺ Retake</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.analyseButton,
+                  isAnalyzing && styles.analyseButtonDisabled,
+                ]}
+                onPress={onAnalyse}
+                disabled={isAnalyzing}
+                testID="analyse-button"
+                activeOpacity={0.8}>
+                {isAnalyzing ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <Text style={styles.analyseButtonText}>Analyse Damage →</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        )
       ) : (
         <View
           style={styles.shutterContainer}
@@ -207,7 +288,11 @@ function ExpoGoCarScanView({onCaptureCompleted}: CarScanScreenProps) {
   const [uiState, setUiState] = useState<CarScanState>('idle');
   const [capturedPhotoUri, setCapturedPhotoUri] = useState<string | null>(null);
   const [torchOn, setTorchOn] = useState<boolean>(false);
+  const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [noDamageDetected, setNoDamageDetected] = useState<boolean>(false);
+  const [detectedDamageResult, setDetectedDamageResult] =
+    useState<DamagePredictionResult | null>(null);
 
   const [permission, requestPermission] = useCameraPermissions();
   const expoCameraRef = useRef<any>(null);
@@ -219,6 +304,8 @@ function ExpoGoCarScanView({onCaptureCompleted}: CarScanScreenProps) {
 
     try {
       setErrorMessage(null);
+      setNoDamageDetected(false);
+      setDetectedDamageResult(null);
       setUiState('scanning');
 
       if (!expoCameraRef.current) {
@@ -254,13 +341,79 @@ function ExpoGoCarScanView({onCaptureCompleted}: CarScanScreenProps) {
   const handleRetake = useCallback(() => {
     setCapturedPhotoUri(null);
     setErrorMessage(null);
+    setNoDamageDetected(false);
+    setDetectedDamageResult(null);
+    setIsAnalyzing(false);
     setUiState('idle');
   }, []);
 
-  const handleAnalyse = useCallback(() => {
-    if (!capturedPhotoUri) {
+  const handleAnalyse = useCallback(async () => {
+    if (!capturedPhotoUri || isAnalyzing) {
       return;
     }
+
+    try {
+      setErrorMessage(null);
+      setNoDamageDetected(false);
+      setIsAnalyzing(true);
+
+      console.log(
+        '[CarScanScreen] Sending captured frame to damage prediction API:',
+        capturedPhotoUri,
+      );
+
+      const result = await predictDamage(capturedPhotoUri, {
+        confidenceThreshold: 0.25,
+        maxRetries: 2,
+      });
+
+      console.log('[CarScanScreen] Damage analysis completed:', result);
+
+      setIsAnalyzing(false);
+      setDetectedDamageResult(result);
+
+      // Save in session for results screen
+      setSessionResult({
+        requestId: result.requestId,
+        modelName: result.modelName,
+        image: result.image,
+        detections: result.detections.map(d => ({
+          classId: d.classId,
+          className: d.className,
+          confidence: d.confidence,
+          bbox: d.bbox,
+        })),
+        annotatedImageUri: result.annotatedImageUri || undefined,
+        processingTimeMs: result.processingTimeMs,
+      });
+
+      // Handle empty detections
+      if (!result.detections || result.detections.length === 0) {
+        setNoDamageDetected(true);
+        return;
+      }
+
+      if (onCaptureCompleted) {
+        onCaptureCompleted(capturedPhotoUri);
+        return;
+      }
+
+      navigation.navigate('ImagePreview', {
+        imageUri: capturedPhotoUri,
+        mediaType: 'image',
+      });
+    } catch (err: any) {
+      console.error('[CarScanScreen] Damage prediction error:', err);
+      setIsAnalyzing(false);
+      setErrorMessage(
+        err?.message ||
+          'Network request failed. Could not reach damage detection server.',
+      );
+    }
+  }, [capturedPhotoUri, isAnalyzing, onCaptureCompleted, navigation]);
+
+  const handleProceedAnyway = useCallback(() => {
+    if (!capturedPhotoUri) return;
     if (onCaptureCompleted) {
       onCaptureCompleted(capturedPhotoUri);
       return;
@@ -310,11 +463,15 @@ function ExpoGoCarScanView({onCaptureCompleted}: CarScanScreenProps) {
       uiState={uiState}
       capturedPhotoUri={capturedPhotoUri}
       torchOn={torchOn}
+      isAnalyzing={isAnalyzing}
       errorMessage={errorMessage}
+      noDamageDetected={noDamageDetected}
+      detectedDamageResult={detectedDamageResult}
       onToggleTorch={() => setTorchOn(prev => !prev)}
       onCapture={handleCapture}
       onRetake={handleRetake}
       onAnalyse={handleAnalyse}
+      onProceedAnyway={handleProceedAnyway}
       onGoBack={() => navigation.goBack()}>
       <CameraView
         ref={expoCameraRef}
@@ -335,7 +492,11 @@ function VisionCarScanView({onCaptureCompleted}: CarScanScreenProps) {
   const [uiState, setUiState] = useState<CarScanState>('idle');
   const [capturedPhotoUri, setCapturedPhotoUri] = useState<string | null>(null);
   const [torchOn, setTorchOn] = useState<boolean>(false);
+  const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [noDamageDetected, setNoDamageDetected] = useState<boolean>(false);
+  const [detectedDamageResult, setDetectedDamageResult] =
+    useState<DamagePredictionResult | null>(null);
 
   const {hasPermission, requestPermission} = useCameraPermission();
   const device = useCameraDevice('back');
@@ -349,6 +510,8 @@ function VisionCarScanView({onCaptureCompleted}: CarScanScreenProps) {
 
     try {
       setErrorMessage(null);
+      setNoDamageDetected(false);
+      setDetectedDamageResult(null);
       setUiState('scanning');
 
       let savedFilePath: string | null = null;
@@ -400,13 +563,79 @@ function VisionCarScanView({onCaptureCompleted}: CarScanScreenProps) {
   const handleRetake = useCallback(() => {
     setCapturedPhotoUri(null);
     setErrorMessage(null);
+    setNoDamageDetected(false);
+    setDetectedDamageResult(null);
+    setIsAnalyzing(false);
     setUiState('idle');
   }, []);
 
-  const handleAnalyse = useCallback(() => {
-    if (!capturedPhotoUri) {
+  const handleAnalyse = useCallback(async () => {
+    if (!capturedPhotoUri || isAnalyzing) {
       return;
     }
+
+    try {
+      setErrorMessage(null);
+      setNoDamageDetected(false);
+      setIsAnalyzing(true);
+
+      console.log(
+        '[CarScanScreen] Sending captured frame to damage prediction API:',
+        capturedPhotoUri,
+      );
+
+      const result = await predictDamage(capturedPhotoUri, {
+        confidenceThreshold: 0.25,
+        maxRetries: 2,
+      });
+
+      console.log('[CarScanScreen] Damage analysis completed:', result);
+
+      setIsAnalyzing(false);
+      setDetectedDamageResult(result);
+
+      // Save in session for results screen
+      setSessionResult({
+        requestId: result.requestId,
+        modelName: result.modelName,
+        image: result.image,
+        detections: result.detections.map(d => ({
+          classId: d.classId,
+          className: d.className,
+          confidence: d.confidence,
+          bbox: d.bbox,
+        })),
+        annotatedImageUri: result.annotatedImageUri || undefined,
+        processingTimeMs: result.processingTimeMs,
+      });
+
+      // Handle empty detections
+      if (!result.detections || result.detections.length === 0) {
+        setNoDamageDetected(true);
+        return;
+      }
+
+      if (onCaptureCompleted) {
+        onCaptureCompleted(capturedPhotoUri);
+        return;
+      }
+
+      navigation.navigate('ImagePreview', {
+        imageUri: capturedPhotoUri,
+        mediaType: 'image',
+      });
+    } catch (err: any) {
+      console.error('[CarScanScreen] Damage prediction error:', err);
+      setIsAnalyzing(false);
+      setErrorMessage(
+        err?.message ||
+          'Network request failed. Could not reach damage detection server.',
+      );
+    }
+  }, [capturedPhotoUri, isAnalyzing, onCaptureCompleted, navigation]);
+
+  const handleProceedAnyway = useCallback(() => {
+    if (!capturedPhotoUri) return;
     if (onCaptureCompleted) {
       onCaptureCompleted(capturedPhotoUri);
       return;
@@ -490,11 +719,15 @@ function VisionCarScanView({onCaptureCompleted}: CarScanScreenProps) {
       uiState={uiState}
       capturedPhotoUri={capturedPhotoUri}
       torchOn={torchOn}
+      isAnalyzing={isAnalyzing}
       errorMessage={errorMessage}
+      noDamageDetected={noDamageDetected}
+      detectedDamageResult={detectedDamageResult}
       onToggleTorch={() => setTorchOn(prev => !prev)}
       onCapture={handleCapture}
       onRetake={handleRetake}
       onAnalyse={handleAnalyse}
+      onProceedAnyway={handleProceedAnyway}
       onGoBack={() => navigation.goBack()}>
       <Camera
         ref={cameraRef}
@@ -650,14 +883,30 @@ const styles = StyleSheet.create({
   errorBanner: {
     marginHorizontal: spacing.lg,
     marginTop: spacing.sm,
-    backgroundColor: 'rgba(229, 83, 83, 0.9)',
-    padding: spacing.sm,
+    backgroundColor: 'rgba(229, 83, 83, 0.95)',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
     borderRadius: radius.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
   },
   errorBannerText: {
     color: '#FFFFFF',
     fontSize: 12,
-    textAlign: 'center',
+    flex: 1,
+  },
+  retryButton: {
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: radius.pill,
+  },
+  retryButtonText: {
+    color: colors.danger,
+    fontSize: 11,
+    fontWeight: '700',
   },
   scanningOverlay: {
     position: 'absolute',
@@ -665,7 +914,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 15,
@@ -678,17 +927,100 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1,
     borderColor: colors.border,
-    minWidth: 260,
+    minWidth: 280,
+    maxWidth: 320,
   },
   scanningTitle: {
     ...typography.h3,
     color: colors.textPrimary,
     marginTop: spacing.md,
     marginBottom: spacing.xs,
+    textAlign: 'center',
   },
   scanningSubtitle: {
     ...typography.caption,
     color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 18,
+  },
+  noDamageCard: {
+    position: 'absolute',
+    bottom: 40,
+    left: spacing.lg,
+    right: spacing.lg,
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: colors.success,
+    zIndex: 12,
+    shadowColor: '#000000',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  noDamageBadge: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(74, 222, 128, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: spacing.sm,
+    borderWidth: 1.5,
+    borderColor: colors.success,
+  },
+  noDamageIcon: {
+    color: colors.success,
+    fontSize: 24,
+    fontWeight: '800',
+  },
+  noDamageTitle: {
+    ...typography.h3,
+    color: colors.textPrimary,
+    marginBottom: spacing.xs,
+  },
+  noDamageSubtitle: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 18,
+    marginBottom: spacing.md,
+  },
+  noDamageActions: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    width: '100%',
+  },
+  noDamageRetakeBtn: {
+    flex: 1,
+    height: 44,
+    borderRadius: radius.pill,
+    backgroundColor: colors.surfaceAlt,
+    borderWidth: 1,
+    borderColor: colors.border,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  noDamageRetakeText: {
+    color: colors.textPrimary,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  noDamageProceedBtn: {
+    flex: 1.2,
+    height: 44,
+    borderRadius: radius.pill,
+    backgroundColor: colors.accent,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  noDamageProceedText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '700',
   },
   shutterContainer: {
     position: 'absolute',
@@ -757,6 +1089,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.35,
     shadowRadius: 8,
     elevation: 4,
+  },
+  analyseButtonDisabled: {
+    opacity: 0.75,
   },
   analyseButtonText: {
     color: '#FFFFFF',

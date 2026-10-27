@@ -23,13 +23,39 @@ jest.mock('@react-navigation/native', () => {
   };
 });
 
+const mockPredictDamage = jest.fn();
+jest.mock('../../src/services/api', () => {
+  const actual = jest.requireActual('../../src/services/api');
+  return {
+    ...actual,
+    predictDamage: (...args: any[]) => mockPredictDamage(...args),
+  };
+});
+
 describe('CarScanScreen Component', () => {
+  const sampleDetectionResult = {
+    requestId: 'test-req-123',
+    modelName: 'yolov8n-tflite',
+    image: {width: 1000, height: 667},
+    detections: [
+      {
+        classId: 0,
+        className: 'dent',
+        confidence: 0.94,
+        bbox: {x1: 20, y1: 30, x2: 200, y2: 300},
+      },
+    ],
+    annotatedImageUri: null,
+    processingTimeMs: 55,
+  };
+
   beforeEach(() => {
     jest.clearAllMocks();
     resetCameraMocks();
     mockCapturePhotoToFile.mockResolvedValue({
       filePath: '/tmp/test_vehicle_scan.jpg',
     });
+    mockPredictDamage.mockResolvedValue(sampleDetectionResult);
   });
 
   it('renders full-screen live camera view with silhouette guide and shutter in idle state', async () => {
@@ -127,7 +153,7 @@ describe('CarScanScreen Component', () => {
     });
   });
 
-  it('calls onCaptureCompleted callback when Analyse is pressed', async () => {
+  it('calls onCaptureCompleted callback when Analyse succeeds', async () => {
     const onCaptureCompleted = jest.fn();
     const {getByTestId} = await render(
       <CarScanScreen onCaptureCompleted={onCaptureCompleted} />,
@@ -143,9 +169,18 @@ describe('CarScanScreen Component', () => {
     // Press Analyse
     fireEvent.press(getByTestId('analyse-button'));
 
-    expect(onCaptureCompleted).toHaveBeenCalledWith(
-      'file:///tmp/test_vehicle_scan.jpg',
-    );
+    await waitFor(() => {
+      expect(mockPredictDamage).toHaveBeenCalledWith(
+        'file:///tmp/test_vehicle_scan.jpg',
+        expect.objectContaining({
+          confidenceThreshold: 0.25,
+          maxRetries: 2,
+        }),
+      );
+      expect(onCaptureCompleted).toHaveBeenCalledWith(
+        'file:///tmp/test_vehicle_scan.jpg',
+      );
+    });
   });
 
   it('navigates to ImagePreview when Analyse is pressed without custom callback', async () => {
@@ -161,9 +196,87 @@ describe('CarScanScreen Component', () => {
     // Press Analyse
     fireEvent.press(getByTestId('analyse-button'));
 
-    expect(mockNavigate).toHaveBeenCalledWith('ImagePreview', {
-      imageUri: 'file:///tmp/test_vehicle_scan.jpg',
-      mediaType: 'image',
+    await waitFor(() => {
+      expect(mockPredictDamage).toHaveBeenCalledTimes(1);
+      expect(mockNavigate).toHaveBeenCalledWith('ImagePreview', {
+        imageUri: 'file:///tmp/test_vehicle_scan.jpg',
+        mediaType: 'image',
+      });
+    });
+  });
+
+  it('handles empty-detection by showing No Damage Detected card with retake and proceed options', async () => {
+    mockPredictDamage.mockResolvedValueOnce({
+      ...sampleDetectionResult,
+      detections: [], // Empty detections
+    });
+
+    const {getByTestId, queryByTestId, getByText} = await render(
+      <CarScanScreen />,
+    );
+
+    // Capture frame
+    fireEvent.press(getByTestId('shutter-button'));
+
+    await waitFor(() => {
+      expect(getByTestId('analyse-button')).toBeTruthy();
+    });
+
+    // Press Analyse
+    fireEvent.press(getByTestId('analyse-button'));
+
+    // Should display empty detection card
+    await waitFor(() => {
+      expect(getByTestId('no-damage-detected-card')).toBeTruthy();
+      expect(getByText('No Damage Detected')).toBeTruthy();
+      expect(getByTestId('no-damage-retake-button')).toBeTruthy();
+      expect(getByTestId('no-damage-proceed-button')).toBeTruthy();
+    });
+
+    // Standard Analyse button should be hidden while showing the card
+    expect(queryByTestId('analyse-button')).toBeNull();
+
+    // Retake from empty card resets to idle
+    fireEvent.press(getByTestId('no-damage-retake-button'));
+    await waitFor(() => {
+      expect(getByTestId('shutter-button')).toBeTruthy();
+      expect(queryByTestId('no-damage-detected-card')).toBeNull();
+    });
+  });
+
+  it('displays network-error banner and retry button when predictDamage fails', async () => {
+    mockPredictDamage.mockRejectedValueOnce(
+      new Error('Connection timed out after 15 seconds'),
+    );
+
+    const {getByTestId, getByText} = await render(<CarScanScreen />);
+
+    // Capture frame
+    fireEvent.press(getByTestId('shutter-button'));
+
+    await waitFor(() => {
+      expect(getByTestId('analyse-button')).toBeTruthy();
+    });
+
+    // Press Analyse -> fails
+    fireEvent.press(getByTestId('analyse-button'));
+
+    await waitFor(() => {
+      expect(getByTestId('network-error-banner')).toBeTruthy();
+      expect(getByText('Connection timed out after 15 seconds')).toBeTruthy();
+      expect(getByTestId('retry-analyse-button')).toBeTruthy();
+    });
+
+    // Press Retry
+    mockPredictDamage.mockResolvedValueOnce(sampleDetectionResult);
+    fireEvent.press(getByTestId('retry-analyse-button'));
+
+    await waitFor(() => {
+      expect(mockPredictDamage).toHaveBeenCalledTimes(2);
+      expect(mockNavigate).toHaveBeenCalledWith('ImagePreview', {
+        imageUri: 'file:///tmp/test_vehicle_scan.jpg',
+        mediaType: 'image',
+      });
     });
   });
 
