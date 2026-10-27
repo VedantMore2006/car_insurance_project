@@ -158,14 +158,20 @@ async def detect_damage(
             detail=f"Uploaded image exceeds maximum allowed size ({MAX_IMAGE_SIZE_BYTES // (1024 * 1024)} MB)",
         )
 
-    # 3. Decode image and correct EXIF orientation
+    # 3. Decode image, sanitize metadata, and correct EXIF orientation
     try:
         image_rgb, orig_w, orig_h = load_image_from_bytes(image_bytes)
-    except Exception as e:
-        logger.warning("Invalid image format or decoding error: %s", e)
+    except ValueError as ve:
+        logger.warning("Rejected invalid image upload (security check): %s", ve)
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=f"Could not decode image file. Please provide a valid JPEG, PNG, or WebP image. Error: {str(e)}",
+            detail=f"Security verification failed: {str(ve)}",
+        )
+    except Exception as e:
+        logger.warning("Unexpected error during image decoding: %s", e)
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Could not process image. Please upload a standard JPEG, PNG, or WebP photo.",
         )
 
     # 4. Resolve threshold parameters
