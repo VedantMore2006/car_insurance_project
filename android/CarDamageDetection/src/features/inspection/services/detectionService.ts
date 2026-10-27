@@ -40,7 +40,8 @@ function guessMimeType(uri: string): string {
   if (lower.endsWith('.webm')) {
     return 'video/webm';
   }
-  return 'application/octet-stream';
+  // Default to image/jpeg for device URIs (such as content:// or picker temp paths)
+  return 'image/jpeg';
 }
 
 function parseDetectionResponse(raw: unknown): DetectionResult {
@@ -146,9 +147,14 @@ export const httpDetectionService: DetectionService = {
           'Unsupported image format. Please use JPEG or PNG.',
         );
       }
+      const rawFilename =
+        imageUri.split('/').pop()?.split('?')[0] ?? 'image.jpg';
+      const name = rawFilename.includes('.')
+        ? rawFilename
+        : `${rawFilename}.jpg`;
       formData.append('image', {
         uri: imageUri,
-        name: imageUri.split('/').pop() ?? 'image.jpg',
+        name,
         type: mimeType,
       } as unknown as Blob);
       if (options.confidenceThreshold !== undefined) {

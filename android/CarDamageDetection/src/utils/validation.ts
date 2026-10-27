@@ -1,4 +1,11 @@
-const SUPPORTED_IMAGE_MIME_TYPES = ['image/jpeg', 'image/jpg', 'image/png'];
+const SUPPORTED_IMAGE_MIME_TYPES = [
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+  'image/webp',
+  'image/heic',
+  'image/heif',
+];
 const SUPPORTED_VIDEO_MIME_TYPES = [
   'video/mp4',
   'video/quicktime',

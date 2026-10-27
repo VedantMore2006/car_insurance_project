@@ -1,3 +1,10 @@
 export * from '../api';
 export * from './apiClient';
-export * from './apiConfig';
+export {
+  API_ENDPOINTS,
+  setApiBaseUrl,
+  getApiBaseUrl,
+  setApiKey,
+  getApiKey,
+  buildUrl,
+} from './apiConfig';
