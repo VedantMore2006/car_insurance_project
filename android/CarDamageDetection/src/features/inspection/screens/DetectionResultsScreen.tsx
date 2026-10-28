@@ -5,8 +5,8 @@ import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import ScreenContainer from '../../../components/ScreenContainer';
 import AppHeader from '../../../components/AppHeader';
 import AppButton from '../../../components/AppButton';
-import ImagePreview from '../../../components/ImagePreview';
 import VideoPreview from '../../../components/VideoPreview';
+import DamageOverlayView from '../../../components/DamageOverlayView';
 import EmptyState from '../../../components/EmptyState';
 import {spacing} from '../../../config/theme';
 import {InspectionStackParamList} from '../../../app/navigation/navigationTypes';
@@ -103,15 +103,12 @@ export default function DetectionResultsScreen() {
             />
           </VideoPreview>
         ) : (
-          <ImagePreview uri={imageUri} onLayout={handleLayout}>
-            <DetectionOverlay
-              detections={detections}
-              originalWidth={result.image.width}
-              originalHeight={result.image.height}
-              containerWidth={containerSize.width}
-              containerHeight={containerSize.height}
-            />
-          </ImagePreview>
+          <DamageOverlayView
+            imageUri={imageUri}
+            detections={detections}
+            originalWidth={result.image.width}
+            originalHeight={result.image.height}
+          />
         )}
 
         {detections.length === 0 ? (

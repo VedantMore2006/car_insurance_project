@@ -1,6 +1,6 @@
 import {AxiosInstance, AxiosError, create as createAxiosInstance} from 'axios';
 import {Platform} from 'react-native';
-import {getApiBaseUrl, getApiKey, DEFAULT_API_KEY} from './api/apiConfig';
+import {getApiBaseUrl, getApiKey} from './api/apiConfig';
 
 export interface BoundingBox {
   x1: number;
@@ -46,12 +46,12 @@ export const TIMEOUT_MS = 15000; // 15-second timeout requirement
  * Axios instance configured with the ngrok/VPS base URL, API key, and 15-second timeout
  */
 export function createApiClient(baseURL: string = NGROK_BASE_URL): AxiosInstance {
-  const activeKey = getApiKey() || DEFAULT_API_KEY;
+  const activeKey = getApiKey();
   return createAxiosInstance({
     baseURL,
     timeout: TIMEOUT_MS,
     headers: {
-      'X-API-Key': activeKey,
+      ...(activeKey ? {'X-API-Key': activeKey} : {}),
       Accept: 'application/json',
     },
   });
@@ -162,12 +162,12 @@ export async function predictDamage(
   let lastError: Error | null = null;
 
   for (const baseUrl of candidateUrls) {
-    const activeKey = getApiKey() || DEFAULT_API_KEY;
+    const activeKey = getApiKey();
     const client = createAxiosInstance({
       baseURL: baseUrl,
       timeout: TIMEOUT_MS,
       headers: {
-        'X-API-Key': activeKey,
+        ...(activeKey ? {'X-API-Key': activeKey} : {}),
         'Content-Type': 'multipart/form-data',
         Accept: 'application/json',
       },

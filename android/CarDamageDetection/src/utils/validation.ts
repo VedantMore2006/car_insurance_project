@@ -17,6 +17,56 @@ const MAX_IMAGE_FILE_SIZE_BYTES = 20 * 1024 * 1024; // 20MB
 const MAX_VIDEO_FILE_SIZE_BYTES = 100 * 1024 * 1024; // 100MB
 const MAX_VIDEO_DURATION_SECONDS = 60; // 60s
 
+/**
+ * OS photo pickers (especially Android's system Photo Picker) sometimes report a `mimeType`
+ * that isn't a recognized image/video type (e.g. "application/octet-stream") even though the
+ * file itself is a perfectly valid JPEG/PNG/MP4. When that happens, fall back to guessing from
+ * the file extension instead of trusting the unreliable reported type.
+ */
+export function resolveMediaMimeType(
+  uri: string,
+  reportedType: string | null | undefined,
+  isVideo: boolean,
+): string | undefined {
+  const normalized = reportedType?.toLowerCase();
+  const knownTypes = isVideo
+    ? SUPPORTED_VIDEO_MIME_TYPES
+    : SUPPORTED_IMAGE_MIME_TYPES;
+  if (normalized && knownTypes.includes(normalized)) {
+    return normalized;
+  }
+
+  const lower = uri.toLowerCase();
+  if (lower.endsWith('.png')) {
+    return 'image/png';
+  }
+  if (lower.endsWith('.jpg') || lower.endsWith('.jpeg')) {
+    return 'image/jpeg';
+  }
+  if (lower.endsWith('.webp')) {
+    return 'image/webp';
+  }
+  if (lower.endsWith('.heic')) {
+    return 'image/heic';
+  }
+  if (lower.endsWith('.heif')) {
+    return 'image/heif';
+  }
+  if (lower.endsWith('.mp4')) {
+    return 'video/mp4';
+  }
+  if (lower.endsWith('.mov')) {
+    return 'video/quicktime';
+  }
+  if (lower.endsWith('.webm')) {
+    return 'video/webm';
+  }
+
+  // No reliable signal either way; let the caller decide rather than reject (the reported type,
+  // even if unrecognized, is still passed through so validation can show a meaningful message).
+  return normalized;
+}
+
 export interface MediaValidationInput {
   uri?: string | null;
   type?: string | null;

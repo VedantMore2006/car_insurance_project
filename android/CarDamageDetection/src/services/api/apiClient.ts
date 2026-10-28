@@ -67,33 +67,123 @@ export async function getJson<T>(
   }
 }
 
+/**
+ * Expo SDK's global `fetch` (installed at startup by expo/winter) only accepts a real Blob/File
+ * for a FormData file part and throws "Unsupported FormDataPart implementation" for React
+ * Native's classic `{uri, name, type}` file shape used below. XMLHttpRequest is untouched by that
+ * polyfill and is what RN apps have always used for multipart file uploads, so we use it here
+ * instead of fetch.
+ */
 export async function postMultipart<T>(
   url: string,
   formData: FormData,
   options: RequestOptions = {},
 ): Promise<T> {
   const timeoutMs = options.timeoutMs ?? appConfig.requestTimeoutMs;
-  const headers: Record<string, string> = {};
   const apiKey = getApiKey();
-  if (apiKey) {
-    headers['X-API-Key'] = apiKey;
-  }
-  try {
-    const response = await withTimeout(
-      signal =>
-        fetch(url, {
-          method: 'POST',
-          body: formData,
-          headers,
-          signal,
-        }),
-      timeoutMs,
-      options.signal,
-    );
-    return await parseJsonResponse<T>(response);
-  } catch (err) {
-    throw normalizeFetchError(err, options.signal);
-  }
+
+  return new Promise<T>((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    let settled = false;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+
+    const cleanup = () => {
+      if (timer) {
+        clearTimeout(timer);
+      }
+      options.signal?.removeEventListener('abort', onExternalAbort);
+    };
+
+    function onExternalAbort() {
+      xhr.abort();
+    }
+
+    xhr.open('POST', url, true);
+    if (apiKey) {
+      xhr.setRequestHeader('X-API-Key', apiKey);
+    }
+
+    xhr.onload = () => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      cleanup();
+      const status = xhr.status;
+      const bodyText = xhr.responseText ?? '';
+      if (status < 200 || status >= 300) {
+        reject(
+          new ApiClientError({
+            kind: 'server',
+            message: `Request failed with status ${status}${
+              bodyText ? `: ${bodyText}` : ''
+            }`,
+            statusCode: status,
+          }),
+        );
+        return;
+      }
+      if (!bodyText) {
+        reject(
+          new ApiClientError({
+            kind: 'parse',
+            message: 'Empty response body from server',
+          }),
+        );
+        return;
+      }
+      try {
+        resolve(JSON.parse(bodyText) as T);
+      } catch {
+        reject(
+          new ApiClientError({
+            kind: 'parse',
+            message: 'Server response was not valid JSON',
+          }),
+        );
+      }
+    };
+
+    xhr.onerror = () => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      cleanup();
+      reject(new ApiClientError({kind: 'network', message: 'Network request failed'}));
+    };
+
+    xhr.ontimeout = () => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      cleanup();
+      reject(new ApiClientError({kind: 'timeout', message: 'Request timed out'}));
+    };
+
+    xhr.onabort = () => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      cleanup();
+      reject(new ApiClientError({kind: 'cancelled', message: 'Request was cancelled'}));
+    };
+
+    xhr.timeout = timeoutMs;
+    timer = setTimeout(() => xhr.abort(), timeoutMs);
+
+    if (options.signal) {
+      if (options.signal.aborted) {
+        xhr.abort();
+      } else {
+        options.signal.addEventListener('abort', onExternalAbort);
+      }
+    }
+
+    xhr.send(formData);
+  });
 }
 
 async function parseJsonResponse<T>(response: Response): Promise<T> {

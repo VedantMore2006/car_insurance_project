@@ -16,6 +16,9 @@ export const colors = {
   warning: '#F5A623',
   danger: '#E55353',
   overlayBox: '#3D8BFF',
+  severityMajor: '#E53935', // confidence > 0.75 (e.g. major dents)
+  severityModerate: '#F5A623', // confidence 0.5 - 0.75 (moderate damage)
+  severityMinor: '#F4D03F', // confidence < 0.5 (e.g. light scratches)
 } as const;
 
 export const spacing = {

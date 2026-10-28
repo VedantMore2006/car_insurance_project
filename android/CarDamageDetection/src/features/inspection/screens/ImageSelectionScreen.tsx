@@ -7,7 +7,10 @@ import ScreenContainer from '../../../components/ScreenContainer';
 import AppHeader from '../../../components/AppHeader';
 import AppButton from '../../../components/AppButton';
 import {colors, radius, spacing, typography} from '../../../config/theme';
-import {validateSelectedMedia} from '../../../utils/validation';
+import {
+  resolveMediaMimeType,
+  validateSelectedMedia,
+} from '../../../utils/validation';
 import {InspectionStackParamList} from '../../../app/navigation/navigationTypes';
 import {MediaType} from '../../../types/common.types';
 
@@ -81,7 +84,7 @@ export default function ImageSelectionScreen() {
 
     const validation = validateSelectedMedia({
       uri: asset.uri,
-      type: asset.mimeType ?? (isVideo ? 'video/mp4' : undefined),
+      type: resolveMediaMimeType(asset.uri, asset.mimeType, isVideo),
       fileSize: asset.fileSize ?? undefined,
       width: asset.width ?? undefined,
       height: asset.height ?? undefined,

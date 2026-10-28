@@ -22,8 +22,12 @@ export function getApiBaseUrl(): string {
   return overrideBaseUrl ?? appConfig.defaultApiBaseUrl;
 }
 
-export const DEFAULT_API_KEY =
-  '***REMOVED-LEAKED-API-KEY***';
+/**
+ * No API key ships in source. A leaked key previously lived here and was rotated + scrubbed from
+ * git history after exposure (GitGuardian alert). Configure a key via the Settings screen — it's
+ * persisted in AsyncStorage on-device only, never committed to the repo.
+ */
+export const DEFAULT_API_KEY: string | null = null;
 
 /** Allows SettingsScreen to update the API key used by apiClient at runtime. */
 export function setApiKey(key: string | null): void {

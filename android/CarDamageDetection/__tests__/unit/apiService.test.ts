@@ -4,7 +4,6 @@ import {
   createApiClient,
   NGROK_BASE_URL,
   TIMEOUT_MS,
-  DEFAULT_API_KEY,
 } from '../../src/services/api';
 
 jest.mock('axios');
@@ -23,7 +22,7 @@ describe('api.ts Service Layer', () => {
     mockedAxios.create = mockCreate;
   });
 
-  it('configures Axios instance with ngrok base URL and 15-second timeout', () => {
+  it('configures Axios instance with ngrok base URL and 15-second timeout, with no hardcoded API key', () => {
     const client = createApiClient();
     expect(client).toBeDefined();
     expect(mockCreate).toHaveBeenCalledWith(
@@ -31,11 +30,13 @@ describe('api.ts Service Layer', () => {
         baseURL: NGROK_BASE_URL,
         timeout: TIMEOUT_MS,
         headers: expect.objectContaining({
-          'X-API-Key': DEFAULT_API_KEY,
           Accept: 'application/json',
         }),
       }),
     );
+    // No API key is baked into source; it must be configured via Settings at runtime.
+    const call = mockCreate.mock.calls[0][0];
+    expect(call.headers['X-API-Key']).toBeUndefined();
     expect(TIMEOUT_MS).toBe(15000);
   });
 
