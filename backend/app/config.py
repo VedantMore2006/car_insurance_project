@@ -12,6 +12,17 @@ DEFAULT_CONF_THRESHOLD = float(os.getenv("DEFAULT_CONF_THRESHOLD", "0.25"))
 DEFAULT_IOU_THRESHOLD = float(os.getenv("DEFAULT_IOU_THRESHOLD", "0.45"))
 MAX_DETECTIONS = int(os.getenv("MAX_DETECTIONS", "300"))
 
+# Vehicle-presence gate (rejects non-car images, e.g. a laptop/desk photo, before damage
+# inference). Threshold is intentionally conservative -- see vehicle_classifier.py docstring.
+VEHICLE_CLASSIFIER_MODEL_PATH = os.getenv(
+    "VEHICLE_CLASSIFIER_MODEL_PATH",
+    str(BASE_DIR / "model" / "mobilenetv2_imagenet.onnx"),
+)
+VEHICLE_PROB_THRESHOLD = float(os.getenv("VEHICLE_PROB_THRESHOLD", "0.02"))
+VEHICLE_CLASSIFIER_ENABLED = os.getenv(
+    "VEHICLE_CLASSIFIER_ENABLED", "true"
+).lower() in ("true", "1", "yes")
+
 # Security & API key configuration
 API_KEY = os.getenv("API_KEY", "").strip()
 MAX_IMAGE_SIZE_BYTES = int(os.getenv("MAX_IMAGE_SIZE_BYTES", str(25 * 1024 * 1024)))  # 25 MB max

@@ -17,6 +17,8 @@ from .config import (
     DEFAULT_CONF_THRESHOLD,
     DEFAULT_IOU_THRESHOLD,
     DEBUG,
+    VEHICLE_CLASSIFIER_ENABLED,
+    VEHICLE_PROB_THRESHOLD,
 )
 from .schemas import (
     DetectionResponse,
@@ -24,6 +26,7 @@ from .schemas import (
     ImageMetadata,
 )
 from .services.inference import DamageDetector
+from .services.vehicle_classifier import VehicleClassifier
 from .utils.image import load_image_from_bytes
 
 logging.basicConfig(
@@ -32,8 +35,9 @@ logging.basicConfig(
 )
 logger = logging.getLogger("cardd_backend")
 
-# Global model runner instance
+# Global model runner instances
 detector = DamageDetector(model_path=MODEL_PATH)
+vehicle_classifier = VehicleClassifier()
 
 # Security: API Key validation
 api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
@@ -75,6 +79,19 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.error("Failed to load model on startup: %s", e, exc_info=True)
         raise e
+    if VEHICLE_CLASSIFIER_ENABLED:
+        try:
+            vehicle_classifier.load_model()
+            logger.info(
+                "Vehicle-presence gate enabled (threshold=%.3f)", VEHICLE_PROB_THRESHOLD
+            )
+        except Exception as e:
+            logger.error(
+                "Failed to load vehicle classifier on startup: %s", e, exc_info=True
+            )
+            raise e
+    else:
+        logger.warning("Vehicle-presence gate disabled (VEHICLE_CLASSIFIER_ENABLED=false)")
     yield
     # Shutdown logic if any
     logger.info("Shutting down Car Damage Detection API")
@@ -184,7 +201,29 @@ async def detect_damage(
             detail="Could not process image. Please upload a standard JPEG, PNG, or WebP photo.",
         )
 
-    # 4. Resolve threshold parameters
+    # 4. Reject images that don't plausibly contain a vehicle (e.g. a laptop/desk photo) before
+    # running the damage model, which was never trained to recognize "is this even a car".
+    if VEHICLE_CLASSIFIER_ENABLED:
+        try:
+            vehicle_prob = vehicle_classifier.vehicle_probability(image_rgb)
+        except Exception as e:
+            logger.error("Vehicle-presence check failed: %s", e, exc_info=True)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Vehicle-presence check failed during image processing.",
+            )
+        if vehicle_prob < VEHICLE_PROB_THRESHOLD:
+            logger.info(
+                "Rejected upload: no vehicle detected (vehicle_prob=%.4f < %.4f)",
+                vehicle_prob,
+                VEHICLE_PROB_THRESHOLD,
+            )
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="No vehicle detected in the image. Please upload a clear photo of a car.",
+            )
+
+    # 5. Resolve threshold parameters
     conf_thresh = (
         confidenceThreshold
         if confidenceThreshold is not None and 0.0 <= confidenceThreshold <= 1.0
@@ -196,7 +235,7 @@ async def detect_damage(
         else DEFAULT_IOU_THRESHOLD
     )
 
-    # 5. Run inference pipeline
+    # 6. Run inference pipeline
     try:
         detections, processing_time_ms = detector.predict(
             image_rgb=image_rgb,
