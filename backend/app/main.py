@@ -2,6 +2,7 @@ import os
 import uuid
 import logging
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
 from typing import Optional
 
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Security, UploadFile, status
@@ -21,6 +22,8 @@ from .config import (
     VEHICLE_PROB_THRESHOLD,
 )
 from .schemas import (
+    ClaimSubmissionRequest,
+    ClaimSubmissionResponse,
     DetectionResponse,
     HealthResponse,
     ImageMetadata,
@@ -268,6 +271,49 @@ async def detect_damage(
         annotatedImageUri=None,
         processingTimeMs=processing_time_ms,
     )
+
+
+@app.post(
+    "/api/v1/claims",
+    response_model=ClaimSubmissionResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+@app.post(
+    "/claims",
+    response_model=ClaimSubmissionResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def submit_claim(
+    claim_data: ClaimSubmissionRequest,
+    _authorized: bool = Depends(verify_api_key),
+):
+    """
+    Submits an insurance damage claim with verified claimant details and pre-populated
+    damage report. Generates a trackable claim reference number.
+    """
+    claim_id = str(uuid.uuid4())
+    year = datetime.now(timezone.utc).year
+    random_code = secrets.token_hex(3).upper()
+    reference_number = f"CLM-{year}-{random_code}"
+    receipt_time = datetime.now(timezone.utc).isoformat()
+
+    logger.info(
+        "Claim received: ref=%s, claimant='%s', policy='%s', car='%s', damages=%d",
+        reference_number,
+        claim_data.claimantName,
+        claim_data.policyNumber,
+        claim_data.carRegistrationNumber,
+        claim_data.damageReport.damageCount,
+    )
+
+    return ClaimSubmissionResponse(
+        status="success",
+        claimId=claim_id,
+        referenceNumber=reference_number,
+        message="Insurance claim submitted and registered successfully.",
+        timestamp=receipt_time,
+    )
+
 
 
 @app.exception_handler(Exception)

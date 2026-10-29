@@ -18,6 +18,7 @@ export const appConfig = {
   storageKeys: {
     settings: '@cdd/settings',
     history: '@cdd/history',
+    claims: '@cdd/claims',
   },
 } as const;
 

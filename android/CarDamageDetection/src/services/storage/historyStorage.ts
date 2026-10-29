@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import appConfig from '../../config/appConfig';
-import {AppSettings, HistoryEntry} from '../../types/common.types';
+import {AppSettings, HistoryEntry, ClaimHistoryEntry} from '../../types/common.types';
 
 /**
  * AsyncStorage-backed metadata only. Never stores full image binaries — only file URI references
@@ -66,3 +66,30 @@ export async function saveSettings(settings: AppSettings): Promise<void> {
     JSON.stringify(settings),
   );
 }
+
+export async function getClaimsHistory(): Promise<ClaimHistoryEntry[]> {
+  try {
+    const raw = await AsyncStorage.getItem(appConfig.storageKeys.claims);
+    if (!raw) {
+      return [];
+    }
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? (parsed as ClaimHistoryEntry[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+export async function saveClaimEntry(entry: ClaimHistoryEntry): Promise<void> {
+  const existing = await getClaimsHistory();
+  const updated = [entry, ...existing.filter(c => c.claimId !== entry.claimId)];
+  await AsyncStorage.setItem(
+    appConfig.storageKeys.claims,
+    JSON.stringify(updated),
+  );
+}
+
+export async function clearClaimsHistory(): Promise<void> {
+  await AsyncStorage.removeItem(appConfig.storageKeys.claims);
+}
+

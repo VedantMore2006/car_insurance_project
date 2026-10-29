@@ -7,15 +7,17 @@ interface ScreenContainerProps {
   children: React.ReactNode;
   scroll?: boolean;
   style?: StyleProp<ViewStyle>;
+  testID?: string;
 }
 
 export default function ScreenContainer({
   children,
   scroll = false,
   style,
+  testID,
 }: ScreenContainerProps) {
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} testID={testID}>
       {scroll ? (
         <ScrollView contentContainerStyle={[styles.content, style]}>
           {children}

@@ -10,6 +10,8 @@ import ImagePreviewScreen from '../../features/inspection/screens/ImagePreviewSc
 import DetectionProgressScreen from '../../features/inspection/screens/DetectionProgressScreen';
 import DetectionResultsScreen from '../../features/inspection/screens/DetectionResultsScreen';
 import CarScanScreen from '../../features/inspection/screens/CarScanScreen';
+import ClaimFormScreen from '../../features/inspection/screens/ClaimFormScreen';
+import ConfirmationScreen from '../../features/inspection/screens/ConfirmationScreen';
 import {colors} from '../../config/theme';
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();
@@ -56,6 +58,22 @@ function InspectionNavigator() {
         component={DetectionResultsScreen}
         options={{
           title: 'Results',
+          headerBackVisible: false,
+          gestureEnabled: false,
+        }}
+      />
+      <InspectionStack.Screen
+        name="ClaimForm"
+        component={ClaimFormScreen}
+        options={{
+          title: 'File Insurance Claim',
+        }}
+      />
+      <InspectionStack.Screen
+        name="Confirmation"
+        component={ConfirmationScreen}
+        options={{
+          title: 'Confirmation',
           headerBackVisible: false,
           gestureEnabled: false,
         }}

@@ -56,6 +56,10 @@ export default function DetectionResultsScreen() {
     setSaved(true);
   };
 
+  const handleProceedToClaim = () => {
+    navigation.navigate('ClaimForm', route.params);
+  };
+
   const handleDone = () => {
     clearSession();
     navigation.getParent()?.goBack();
@@ -128,13 +132,19 @@ export default function DetectionResultsScreen() {
 
         <View style={styles.actions}>
           <AppButton
+            title="File Insurance Claim →"
+            onPress={handleProceedToClaim}
+            testID="proceed-to-claim-button"
+          />
+          <AppButton
             title={saved ? 'Saved to History' : 'Save to History'}
+            variant="secondary"
             onPress={handleSave}
             disabled={saved}
             testID="save-to-history-button"
           />
           <AppButton
-            title="Retry"
+            title="Retry Analysis"
             variant="secondary"
             onPress={handleRetry}
             style={styles.actionButton}

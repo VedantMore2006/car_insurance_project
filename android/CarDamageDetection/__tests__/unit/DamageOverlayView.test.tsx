@@ -12,13 +12,13 @@ import {colors} from '../../src/config/theme';
  * already-covered imageUtils helpers) lines boxes up with the right pixels for each one, and that
  * severity color coding is applied correctly at each confidence tier.
  */
-const FIXTURES: Array<{
+const FIXTURES: {
   name: string;
   originalWidth: number;
   originalHeight: number;
   containerSize: {width: number; height: number};
   detection: Detection;
-}> = [
+}[] = [
   {
     name: 'landscape photo, front bumper dent (major)',
     originalWidth: 4032,

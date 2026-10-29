@@ -35,3 +35,30 @@ class HealthResponse(BaseModel):
     model_loaded: bool
     model_name: str
     version: str = "1.0.0"
+
+
+class DamageSummaryPayload(BaseModel):
+    detectedLabels: List[str] = Field(default_factory=list, description="Unique damage class labels detected")
+    damageCount: int = Field(0, description="Total number of detected damages")
+    highestConfidenceClass: Optional[str] = Field(None, description="Class name with highest confidence")
+    highestConfidence: Optional[float] = Field(None, ge=0.0, le=1.0, description="Highest confidence score")
+    detections: List[DetectionItem] = Field(default_factory=list, description="Full list of detections")
+    imageUri: Optional[str] = Field(None, description="Reference URI to scanned image")
+
+
+class ClaimSubmissionRequest(BaseModel):
+    claimantName: str = Field(..., min_length=1, description="Full name of claimant")
+    policyNumber: str = Field(..., min_length=1, description="Insurance policy number")
+    carRegistrationNumber: str = Field(..., min_length=1, description="Vehicle registration plate number")
+    contactPhone: str = Field(..., min_length=1, description="Contact phone number")
+    damageReport: DamageSummaryPayload = Field(..., description="Pre-populated damage report from model")
+    submittedAt: Optional[str] = Field(None, description="ISO timestamp of submission")
+
+
+class ClaimSubmissionResponse(BaseModel):
+    status: str = Field("success", description="Status string: success or error")
+    claimId: str = Field(..., description="Unique UUID for the submitted claim")
+    referenceNumber: str = Field(..., description="Human-friendly claim reference code, e.g. CLM-2026-A8F9B2")
+    message: str = Field("Claim submitted successfully", description="Status message")
+    timestamp: str = Field(..., description="ISO timestamp of claim receipt")
+

@@ -9,12 +9,30 @@ export interface InspectionMediaParams {
   duration?: number;
 }
 
+export interface ConfirmationParams {
+  claimId: string;
+  referenceNumber: string;
+  claimantName: string;
+  policyNumber: string;
+  carRegistrationNumber: string;
+  contactPhone: string;
+  damageCount: number;
+  detectedLabels: string[];
+  highestConfidenceClass?: string;
+  highestConfidence?: number;
+  submittedAt: string;
+  imageUri?: string;
+  isOffline?: boolean;
+}
+
 export type InspectionStackParamList = {
   ImageSelection: undefined;
   CarScan: undefined;
   ImagePreview: InspectionMediaParams;
   DetectionProgress: InspectionMediaParams;
   DetectionResults: InspectionMediaParams;
+  ClaimForm: InspectionMediaParams;
+  Confirmation: ConfirmationParams;
 };
 
 export type MainTabParamList = {

@@ -51,7 +51,6 @@ export default function DamageOverlayView({
 
   useEffect(() => {
     if (originalWidth && originalHeight) {
-      setNaturalSize({width: originalWidth, height: originalHeight});
       return;
     }
     let cancelled = false;
