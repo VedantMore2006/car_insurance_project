@@ -15,6 +15,7 @@ import DetectionResultCard from '../components/DetectionResultCard';
 import {getSession, clearSession} from '../inspectionSession';
 import {addHistoryEntry} from '../../../services/storage/historyStorage';
 import {formatDetectionCount} from '../../../utils/formatters';
+import {useInspection} from '../../../context/InspectionContext';
 
 type Nav = NativeStackNavigationProp<
   InspectionStackParamList,
@@ -25,18 +26,24 @@ type Rt = RouteProp<InspectionStackParamList, 'DetectionResults'>;
 export default function DetectionResultsScreen() {
   const navigation = useNavigation<Nav>();
   const route = useRoute<Rt>();
-  const {imageUri, mediaType = 'image', duration} = route.params;
+  const {
+    capturedImageURI,
+    damageResults,
+    resetInspectionState,
+  } = useInspection();
+
+  const {imageUri = '', mediaType = 'image', duration} = route.params || {};
+  const activeImageUri = capturedImageURI || imageUri;
   const isVideo = mediaType === 'video';
   const [containerSize, setContainerSize] = useState({width: 0, height: 0});
   const [saved, setSaved] = useState(false);
-  const session = getSession();
 
   const handleLayout = (event: LayoutChangeEvent) => {
     const {width, height} = event.nativeEvent.layout;
     setContainerSize({width, height});
   };
 
-  const result = session.result;
+  const result = damageResults || getSession().result;
   const detections = result?.detections ?? [];
 
   const handleSave = async () => {
@@ -46,7 +53,7 @@ export default function DetectionResultsScreen() {
     await addHistoryEntry({
       id: `${Date.now()}`,
       createdAt: new Date().toISOString(),
-      imageUri,
+      imageUri: activeImageUri,
       detectionCount: detections.length,
       status: detections.length > 0 ? 'success' : 'no_detections',
       classNames: detections.map(d => d.className),
@@ -57,16 +64,30 @@ export default function DetectionResultsScreen() {
   };
 
   const handleProceedToClaim = () => {
-    navigation.navigate('ClaimForm', route.params);
+    navigation.navigate('ClaimForm', {
+      imageUri: activeImageUri,
+      mediaType,
+      duration,
+    });
+  };
+
+  const handleRetakeScan = () => {
+    resetInspectionState();
+    navigation.navigate('CarScan');
   };
 
   const handleDone = () => {
+    resetInspectionState();
     clearSession();
     navigation.getParent()?.goBack();
   };
 
   const handleRetry = () => {
-    navigation.replace('DetectionProgress', route.params);
+    navigation.replace('DetectionProgress', {
+      imageUri: activeImageUri,
+      mediaType,
+      duration,
+    });
   };
 
   if (!result) {
@@ -76,6 +97,13 @@ export default function DetectionResultsScreen() {
         <EmptyState
           title="No result available"
           message="Please run the analysis again."
+        />
+        <AppButton
+          title="Retake Scan"
+          variant="secondary"
+          onPress={handleRetakeScan}
+          testID="empty-retake-scan-button"
+          style={styles.actionButton}
         />
         <AppButton
           title="Back to Dashboard"
@@ -95,7 +123,7 @@ export default function DetectionResultsScreen() {
       <View style={styles.content}>
         {isVideo ? (
           <VideoPreview
-            uri={imageUri}
+            uri={activeImageUri}
             duration={duration}
             onLayout={handleLayout}>
             <DetectionOverlay
@@ -108,7 +136,7 @@ export default function DetectionResultsScreen() {
           </VideoPreview>
         ) : (
           <DamageOverlayView
-            imageUri={imageUri}
+            imageUri={activeImageUri}
             detections={detections}
             originalWidth={result.image.width}
             originalHeight={result.image.height}
@@ -135,6 +163,12 @@ export default function DetectionResultsScreen() {
             title="File Insurance Claim →"
             onPress={handleProceedToClaim}
             testID="proceed-to-claim-button"
+          />
+          <AppButton
+            title="Retake Scan"
+            variant="secondary"
+            onPress={handleRetakeScan}
+            testID="retake-scan-button"
           />
           <AppButton
             title={saved ? 'Saved to History' : 'Save to History'}

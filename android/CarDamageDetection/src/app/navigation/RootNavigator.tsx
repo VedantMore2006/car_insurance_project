@@ -21,9 +21,11 @@ function InspectionNavigator() {
   return (
     <InspectionStack.Navigator
       screenOptions={{
+        animation: 'slide_from_right',
         headerStyle: {backgroundColor: colors.surface},
         headerTintColor: colors.textPrimary,
         contentStyle: {backgroundColor: colors.background},
+        headerBackTitle: 'Back',
       }}>
       <InspectionStack.Screen
         name="ImageSelection"
@@ -35,8 +37,7 @@ function InspectionNavigator() {
         component={CarScanScreen}
         options={{
           headerShown: false,
-          presentation: 'fullScreenModal',
-          animation: 'fade',
+          animation: 'slide_from_right',
         }}
       />
       <InspectionStack.Screen
@@ -54,12 +55,19 @@ function InspectionNavigator() {
         }}
       />
       <InspectionStack.Screen
+        name="DamageOverlay"
+        component={DetectionResultsScreen}
+        options={{
+          title: 'Damage Overlay',
+          headerBackVisible: true,
+        }}
+      />
+      <InspectionStack.Screen
         name="DetectionResults"
         component={DetectionResultsScreen}
         options={{
           title: 'Results',
-          headerBackVisible: false,
-          gestureEnabled: false,
+          headerBackVisible: true,
         }}
       />
       <InspectionStack.Screen
@@ -67,6 +75,7 @@ function InspectionNavigator() {
         component={ClaimFormScreen}
         options={{
           title: 'File Insurance Claim',
+          headerBackVisible: true,
         }}
       />
       <InspectionStack.Screen

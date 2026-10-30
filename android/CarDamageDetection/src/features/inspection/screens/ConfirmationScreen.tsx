@@ -18,6 +18,7 @@ import {
   RootStackParamList,
 } from '../../../app/navigation/navigationTypes';
 import {clearSession} from '../inspectionSession';
+import {useInspection} from '../../../context/InspectionContext';
 
 type RootNav = NativeStackNavigationProp<RootStackParamList>;
 type Rt = RouteProp<InspectionStackParamList, 'Confirmation'>;
@@ -25,20 +26,21 @@ type Rt = RouteProp<InspectionStackParamList, 'Confirmation'>;
 export default function ConfirmationScreen() {
   const rootNavigation = useNavigation<RootNav>();
   const route = useRoute<Rt>();
+  const {resetInspectionState} = useInspection();
 
   const {
-    referenceNumber,
-    claimantName,
-    policyNumber,
-    carRegistrationNumber,
-    contactPhone,
-    damageCount,
-    detectedLabels,
+    referenceNumber = 'CLM-2026-UNKNOWN',
+    claimantName = '',
+    policyNumber = '',
+    carRegistrationNumber = '',
+    contactPhone = '',
+    damageCount = 0,
+    detectedLabels = [],
     highestConfidenceClass,
     highestConfidence,
-    submittedAt,
-    isOffline,
-  } = route.params;
+    submittedAt = new Date().toISOString(),
+    isOffline = false,
+  } = route.params || {};
 
   const formattedDate = React.useMemo(() => {
     try {
@@ -59,6 +61,7 @@ export default function ConfirmationScreen() {
   };
 
   const handleDone = () => {
+    resetInspectionState();
     clearSession();
     // Navigate back to Dashboard root
     rootNavigation.navigate('MainTabs', {
@@ -67,6 +70,7 @@ export default function ConfirmationScreen() {
   };
 
   const handleViewHistory = () => {
+    resetInspectionState();
     clearSession();
     // Navigate to History tab
     rootNavigation.navigate('MainTabs', {

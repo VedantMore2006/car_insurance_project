@@ -183,7 +183,7 @@ describe('CarScanScreen Component', () => {
     });
   });
 
-  it('navigates to ImagePreview when Analyse is pressed without custom callback', async () => {
+  it('navigates to DamageOverlay when Analyse is pressed without custom callback', async () => {
     const {getByTestId} = await render(<CarScanScreen />);
 
     // Capture frame
@@ -198,7 +198,7 @@ describe('CarScanScreen Component', () => {
 
     await waitFor(() => {
       expect(mockPredictDamage).toHaveBeenCalledTimes(1);
-      expect(mockNavigate).toHaveBeenCalledWith('ImagePreview', {
+      expect(mockNavigate).toHaveBeenCalledWith('DamageOverlay', {
         imageUri: 'file:///tmp/test_vehicle_scan.jpg',
         mediaType: 'image',
       });
@@ -273,7 +273,7 @@ describe('CarScanScreen Component', () => {
 
     await waitFor(() => {
       expect(mockPredictDamage).toHaveBeenCalledTimes(2);
-      expect(mockNavigate).toHaveBeenCalledWith('ImagePreview', {
+      expect(mockNavigate).toHaveBeenCalledWith('DamageOverlay', {
         imageUri: 'file:///tmp/test_vehicle_scan.jpg',
         mediaType: 'image',
       });

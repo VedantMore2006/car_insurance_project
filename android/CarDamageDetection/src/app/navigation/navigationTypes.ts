@@ -30,9 +30,10 @@ export type InspectionStackParamList = {
   CarScan: undefined;
   ImagePreview: InspectionMediaParams;
   DetectionProgress: InspectionMediaParams;
-  DetectionResults: InspectionMediaParams;
-  ClaimForm: InspectionMediaParams;
-  Confirmation: ConfirmationParams;
+  DetectionResults: InspectionMediaParams | undefined;
+  DamageOverlay: InspectionMediaParams | undefined;
+  ClaimForm: InspectionMediaParams | undefined;
+  Confirmation: ConfirmationParams | undefined;
 };
 
 export type MainTabParamList = {

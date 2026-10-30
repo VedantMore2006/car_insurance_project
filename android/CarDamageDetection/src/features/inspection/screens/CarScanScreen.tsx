@@ -24,6 +24,7 @@ import {InspectionStackParamList} from '../../../app/navigation/navigationTypes'
 import CarSilhouetteGuide from '../components/CarSilhouetteGuide';
 import {predictDamage, DamagePredictionResult} from '../../../services/api';
 import {setSessionResult} from '../inspectionSession';
+import {useInspection} from '../../../context/InspectionContext';
 import {colors, spacing, radius, typography} from '../../../config/theme';
 
 export type CarScanState = 'idle' | 'scanning' | 'captured';
@@ -285,6 +286,7 @@ function CarScanViewBase({
  */
 function ExpoGoCarScanView({onCaptureCompleted}: CarScanScreenProps) {
   const navigation = useNavigation<Nav>();
+  const {setCapturedImageURI, setDamageResults} = useInspection();
   const [uiState, setUiState] = useState<CarScanState>('idle');
   const [capturedPhotoUri, setCapturedPhotoUri] = useState<string | null>(null);
   const [torchOn, setTorchOn] = useState<boolean>(false);
@@ -372,8 +374,7 @@ function ExpoGoCarScanView({onCaptureCompleted}: CarScanScreenProps) {
       setIsAnalyzing(false);
       setDetectedDamageResult(result);
 
-      // Save in session for results screen
-      setSessionResult({
+      const mappedResult = {
         requestId: result.requestId,
         modelName: result.modelName,
         image: result.image,
@@ -385,7 +386,12 @@ function ExpoGoCarScanView({onCaptureCompleted}: CarScanScreenProps) {
         })),
         annotatedImageUri: result.annotatedImageUri || undefined,
         processingTimeMs: result.processingTimeMs,
-      });
+      };
+
+      // Save in global context and session
+      setCapturedImageURI(capturedPhotoUri);
+      setDamageResults(mappedResult);
+      setSessionResult(mappedResult);
 
       // Handle empty detections
       if (!result.detections || result.detections.length === 0) {
@@ -398,7 +404,7 @@ function ExpoGoCarScanView({onCaptureCompleted}: CarScanScreenProps) {
         return;
       }
 
-      navigation.navigate('ImagePreview', {
+      navigation.navigate('DamageOverlay', {
         imageUri: capturedPhotoUri,
         mediaType: 'image',
       });
@@ -410,7 +416,14 @@ function ExpoGoCarScanView({onCaptureCompleted}: CarScanScreenProps) {
           'Network request failed. Could not reach damage detection server.',
       );
     }
-  }, [capturedPhotoUri, isAnalyzing, onCaptureCompleted, navigation]);
+  }, [
+    capturedPhotoUri,
+    isAnalyzing,
+    onCaptureCompleted,
+    navigation,
+    setCapturedImageURI,
+    setDamageResults,
+  ]);
 
   const handleProceedAnyway = useCallback(() => {
     if (!capturedPhotoUri) return;
@@ -418,7 +431,7 @@ function ExpoGoCarScanView({onCaptureCompleted}: CarScanScreenProps) {
       onCaptureCompleted(capturedPhotoUri);
       return;
     }
-    navigation.navigate('ImagePreview', {
+    navigation.navigate('DamageOverlay', {
       imageUri: capturedPhotoUri,
       mediaType: 'image',
     });
@@ -489,6 +502,7 @@ function ExpoGoCarScanView({onCaptureCompleted}: CarScanScreenProps) {
  */
 function VisionCarScanView({onCaptureCompleted}: CarScanScreenProps) {
   const navigation = useNavigation<Nav>();
+  const {setCapturedImageURI, setDamageResults} = useInspection();
   const [uiState, setUiState] = useState<CarScanState>('idle');
   const [capturedPhotoUri, setCapturedPhotoUri] = useState<string | null>(null);
   const [torchOn, setTorchOn] = useState<boolean>(false);
@@ -594,8 +608,7 @@ function VisionCarScanView({onCaptureCompleted}: CarScanScreenProps) {
       setIsAnalyzing(false);
       setDetectedDamageResult(result);
 
-      // Save in session for results screen
-      setSessionResult({
+      const mappedResult = {
         requestId: result.requestId,
         modelName: result.modelName,
         image: result.image,
@@ -607,7 +620,12 @@ function VisionCarScanView({onCaptureCompleted}: CarScanScreenProps) {
         })),
         annotatedImageUri: result.annotatedImageUri || undefined,
         processingTimeMs: result.processingTimeMs,
-      });
+      };
+
+      // Save in global context and session
+      setCapturedImageURI(capturedPhotoUri);
+      setDamageResults(mappedResult);
+      setSessionResult(mappedResult);
 
       // Handle empty detections
       if (!result.detections || result.detections.length === 0) {
@@ -620,7 +638,7 @@ function VisionCarScanView({onCaptureCompleted}: CarScanScreenProps) {
         return;
       }
 
-      navigation.navigate('ImagePreview', {
+      navigation.navigate('DamageOverlay', {
         imageUri: capturedPhotoUri,
         mediaType: 'image',
       });
@@ -632,7 +650,14 @@ function VisionCarScanView({onCaptureCompleted}: CarScanScreenProps) {
           'Network request failed. Could not reach damage detection server.',
       );
     }
-  }, [capturedPhotoUri, isAnalyzing, onCaptureCompleted, navigation]);
+  }, [
+    capturedPhotoUri,
+    isAnalyzing,
+    onCaptureCompleted,
+    navigation,
+    setCapturedImageURI,
+    setDamageResults,
+  ]);
 
   const handleProceedAnyway = useCallback(() => {
     if (!capturedPhotoUri) return;
@@ -640,7 +665,7 @@ function VisionCarScanView({onCaptureCompleted}: CarScanScreenProps) {
       onCaptureCompleted(capturedPhotoUri);
       return;
     }
-    navigation.navigate('ImagePreview', {
+    navigation.navigate('DamageOverlay', {
       imageUri: capturedPhotoUri,
       mediaType: 'image',
     });

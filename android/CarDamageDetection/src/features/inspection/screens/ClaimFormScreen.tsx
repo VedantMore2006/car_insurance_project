@@ -20,6 +20,7 @@ import {InspectionStackParamList} from '../../../app/navigation/navigationTypes'
 import {getSession} from '../inspectionSession';
 import {submitClaim} from '../../../services/api';
 import {saveClaimEntry} from '../../../services/storage/historyStorage';
+import {useInspection} from '../../../context/InspectionContext';
 import {
   ClaimFormData,
   ClaimSubmissionPayload,
@@ -39,14 +40,22 @@ interface FormErrors {
 export default function ClaimFormScreen() {
   const navigation = useNavigation<Nav>();
   const route = useRoute<Rt>();
-  const {imageUri} = route.params || {};
+  const {
+    capturedImageURI,
+    damageResults,
+    claimFormData,
+    setClaimFormData,
+  } = useInspection();
 
-  // Form Fields State
+  const {imageUri: routeImageUri} = route.params || {};
+  const activeImageUri = capturedImageURI || routeImageUri;
+
+  // Form Fields State initialized from global context
   const [formData, setFormData] = useState<ClaimFormData>({
-    claimantName: '',
-    policyNumber: '',
-    carRegistrationNumber: '',
-    contactPhone: '',
+    claimantName: claimFormData.claimantName || '',
+    policyNumber: claimFormData.policyNumber || '',
+    carRegistrationNumber: claimFormData.carRegistrationNumber || '',
+    contactPhone: claimFormData.contactPhone || '',
   });
 
   const [touched, setTouched] = useState<Record<keyof ClaimFormData, boolean>>({
@@ -60,9 +69,8 @@ export default function ClaimFormScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  // Pre-populate read-only Damage Summary from session
-  const session = getSession();
-  const detectionResult = session.result;
+  // Pre-populate read-only Damage Summary from context or session
+  const detectionResult = damageResults || getSession().result;
   const detections = useMemo(
     () => detectionResult?.detections ?? [],
     [detectionResult],
@@ -91,9 +99,9 @@ export default function ClaimFormScreen() {
       highestConfidenceClass: highestClass,
       highestConfidence: highestConf,
       detections,
-      imageUri,
+      imageUri: activeImageUri,
     };
-  }, [detections, imageUri]);
+  }, [detections, activeImageUri]);
 
   // Validation Logic
   const errors: FormErrors = useMemo(() => {
@@ -126,6 +134,7 @@ export default function ClaimFormScreen() {
 
   const handleChange = (field: keyof ClaimFormData, value: string) => {
     setFormData(prev => ({...prev, [field]: value}));
+    setClaimFormData({[field]: value});
     if (submitError) {
       setSubmitError(null);
     }
@@ -194,7 +203,7 @@ export default function ClaimFormScreen() {
         highestConfidenceClass: damageSummary.highestConfidenceClass,
         highestConfidence: damageSummary.highestConfidence,
         submittedAt: result.timestamp,
-        imageUri,
+        imageUri: activeImageUri,
         isOffline: result.isOffline,
       });
     } catch (err: any) {
@@ -242,9 +251,9 @@ export default function ClaimFormScreen() {
             <View style={styles.summaryDivider} />
 
             <View style={styles.summaryBody}>
-              {imageUri ? (
+              {activeImageUri ? (
                 <Image
-                  source={{uri: imageUri}}
+                  source={{uri: activeImageUri}}
                   style={styles.summaryThumbnail}
                   resizeMode="cover"
                 />
