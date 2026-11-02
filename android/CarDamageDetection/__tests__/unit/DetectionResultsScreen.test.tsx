@@ -60,7 +60,7 @@ describe('DetectionResultsScreen (DamageOverlay)', () => {
 
     expect(getByTestId('proceed-to-claim-button')).toBeTruthy();
     expect(getByTestId('retake-scan-button')).toBeTruthy();
-    expect(getByText('File Insurance Claim →')).toBeTruthy();
+    expect(getByText('File Insurance Claim')).toBeTruthy();
     expect(getByText('Retake Scan')).toBeTruthy();
   });
 

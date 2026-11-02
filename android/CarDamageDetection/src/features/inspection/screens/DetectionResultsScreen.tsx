@@ -217,7 +217,8 @@ export default function DetectionResultsScreen() {
 
         <View style={styles.actions}>
           <AppButton
-            title="File Insurance Claim →"
+            title="File Insurance Claim"
+            icon="arrowForward"
             onPress={handleProceedToClaim}
             testID="proceed-to-claim-button"
           />

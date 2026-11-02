@@ -1,23 +1,19 @@
 import React from 'react';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
-import {Text} from 'react-native';
 import {MainTabParamList} from './navigationTypes';
 import DashboardScreen from '../../features/dashboard/screens/DashboardScreen';
 import HistoryScreen from '../../features/history/screens/HistoryScreen';
 import SettingsScreen from '../../features/settings/screens/SettingsScreen';
+import Icon, {IconName} from '../../components/Icon';
 import {colors} from '../../config/theme';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
-const ICONS: Record<keyof MainTabParamList, string> = {
-  Dashboard: '🏠',
-  History: '🕑',
-  Settings: '⚙️',
+const ICONS: Record<keyof MainTabParamList, IconName> = {
+  Dashboard: 'home',
+  History: 'history',
+  Settings: 'settings',
 };
-
-function TabIcon({routeName}: {routeName: keyof MainTabParamList}) {
-  return <Text>{ICONS[routeName]}</Text>;
-}
 
 export default function MainTabNavigator() {
   return (
@@ -30,8 +26,8 @@ export default function MainTabNavigator() {
           backgroundColor: colors.surface,
           borderTopColor: colors.border,
         },
-        tabBarIcon: () => (
-          <TabIcon routeName={route.name as keyof MainTabParamList} />
+        tabBarIcon: ({color, size}) => (
+          <Icon name={ICONS[route.name as keyof MainTabParamList]} color={color} size={size} />
         ),
       })}>
       <Tab.Screen name="Dashboard" component={DashboardScreen} />

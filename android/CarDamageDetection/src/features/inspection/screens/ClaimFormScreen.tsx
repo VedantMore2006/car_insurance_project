@@ -13,8 +13,9 @@ import {
 import {useNavigation, useRoute, RouteProp} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import ScreenContainer from '../../../components/ScreenContainer';
-import AppHeader from '../../../components/AppHeader';
 import AppButton from '../../../components/AppButton';
+import Icon from '../../../components/Icon';
+import Badge from '../../../components/Badge';
 import {colors, spacing, radius, typography} from '../../../config/theme';
 import {InspectionStackParamList} from '../../../app/navigation/navigationTypes';
 import {getSession} from '../inspectionSession';
@@ -224,10 +225,9 @@ export default function ClaimFormScreen() {
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.keyboardContainer}>
-        <AppHeader
-          title="File Insurance Claim"
-          subtitle="Review detected damages and fill claimant details"
-        />
+        <Text style={styles.screenSubtitle}>
+          Review detected damages and fill claimant details
+        </Text>
 
         <ScrollView
           contentContainerStyle={styles.content}
@@ -236,7 +236,7 @@ export default function ClaimFormScreen() {
           <View style={styles.summaryCard} testID="damage-summary-card">
             <View style={styles.summaryHeader}>
               <View style={styles.summaryIconContainer}>
-                <Text style={styles.summaryIcon}>🔍</Text>
+                <Icon name="search" color={colors.accent} size={18} />
               </View>
               <View style={styles.summaryTitleCol}>
                 <Text style={styles.summaryTitle}>
@@ -246,9 +246,7 @@ export default function ClaimFormScreen() {
                   Verified by YOLOv8n automated model
                 </Text>
               </View>
-              <View style={styles.readOnlyBadge}>
-                <Text style={styles.readOnlyBadgeText}>READ-ONLY</Text>
-              </View>
+              <Badge tone="neutral" label="READ-ONLY" />
             </View>
 
             <View style={styles.summaryDivider} />
@@ -297,9 +295,7 @@ export default function ClaimFormScreen() {
                 {damageSummary.detectedLabels.length > 0 ? (
                   <View style={styles.tagsContainer} testID="damage-labels-list">
                     {damageSummary.detectedLabels.map(label => (
-                      <View key={label} style={styles.tagBadge}>
-                        <Text style={styles.tagBadgeText}>{label}</Text>
-                      </View>
+                      <Badge key={label} tone="accent" label={label} />
                     ))}
                   </View>
                 ) : (
@@ -475,6 +471,12 @@ const styles = StyleSheet.create({
   keyboardContainer: {
     flex: 1,
   },
+  screenSubtitle: {
+    ...typography.body,
+    color: colors.textSecondary,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+  },
   content: {
     paddingHorizontal: spacing.lg,
     paddingBottom: spacing.xxl,
@@ -501,9 +503,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  summaryIcon: {
-    fontSize: 18,
-  },
   summaryTitleCol: {
     flex: 1,
   },
@@ -515,20 +514,6 @@ const styles = StyleSheet.create({
   summarySubtitle: {
     fontSize: typography.caption.fontSize,
     color: colors.textMuted,
-  },
-  readOnlyBadge: {
-    backgroundColor: colors.surfaceAlt,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  readOnlyBadgeText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: colors.textSecondary,
-    letterSpacing: 0.5,
   },
   summaryDivider: {
     height: 1,
@@ -575,20 +560,6 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: spacing.xs,
     marginTop: spacing.xs,
-  },
-  tagBadge: {
-    backgroundColor: colors.surfaceAlt,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 3,
-    borderRadius: radius.sm,
-    borderWidth: 1,
-    borderColor: colors.accentMuted,
-  },
-  tagBadgeText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: colors.accent,
-    textTransform: 'capitalize',
   },
   noDamageText: {
     fontSize: typography.caption.fontSize,

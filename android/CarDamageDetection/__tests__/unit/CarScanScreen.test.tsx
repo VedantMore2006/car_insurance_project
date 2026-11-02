@@ -86,18 +86,18 @@ describe('CarScanScreen Component', () => {
     const torchButton = getByTestId('torch-toggle-button');
 
     // Default icon
-    expect(getByText('💡')).toBeTruthy();
+    expect(getByText('flash-off')).toBeTruthy();
 
     // Press to turn on torch
     fireEvent.press(torchButton);
     await waitFor(() => {
-      expect(getByText('⚡')).toBeTruthy();
+      expect(getByText('flash')).toBeTruthy();
     });
 
     // Press again to turn off torch
     fireEvent.press(torchButton);
     await waitFor(() => {
-      expect(getByText('💡')).toBeTruthy();
+      expect(getByText('flash-off')).toBeTruthy();
     });
   });
 

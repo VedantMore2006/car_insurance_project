@@ -22,10 +22,12 @@ import {useNavigation} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {InspectionStackParamList} from '../../../app/navigation/navigationTypes';
 import CarSilhouetteGuide from '../components/CarSilhouetteGuide';
+import AppButton from '../../../components/AppButton';
+import Icon from '../../../components/Icon';
 import {predictDamage, DamagePredictionResult} from '../../../services/api';
 import {setSessionResult} from '../inspectionSession';
 import {useInspection} from '../../../context/InspectionContext';
-import {colors, spacing, radius, typography} from '../../../config/theme';
+import {colors, spacing, radius, typography, withAlpha} from '../../../config/theme';
 
 export type CarScanState = 'idle' | 'scanning' | 'captured';
 
@@ -105,13 +107,14 @@ function CarScanViewBase({
       <View style={styles.topHudContainer} pointerEvents="box-none">
         <View style={styles.topBar}>
           {/* Back button */}
-          <TouchableOpacity
-            style={styles.hudIconButton}
+          <AppButton
+            title="Close"
+            icon="close"
+            iconOnly
+            variant="ghost"
             onPress={onGoBack}
             testID="car-scan-back"
-            activeOpacity={0.7}>
-            <Text style={styles.hudIconText}>✕</Text>
-          </TouchableOpacity>
+          />
 
           {/* Status Indicator Badge */}
           <View style={styles.statusBadge} testID="scan-state-badge">
@@ -140,17 +143,15 @@ function CarScanViewBase({
           </View>
 
           {/* Flash / Torch toggle button */}
-          <TouchableOpacity
-            style={[
-              styles.hudIconButton,
-              torchOn && styles.hudIconButtonActive,
-            ]}
+          <AppButton
+            title={torchOn ? 'Turn torch off' : 'Turn torch on'}
+            icon={torchOn ? 'torchOn' : 'torchOff'}
+            iconOnly
+            variant={torchOn ? 'primary' : 'ghost'}
             onPress={onToggleTorch}
             testID="torch-toggle-button"
             disabled={uiState === 'captured'}
-            activeOpacity={0.7}>
-            <Text style={styles.hudIconText}>{torchOn ? '⚡' : '💡'}</Text>
-          </TouchableOpacity>
+          />
         </View>
 
         {/* Network Error Banner with Retry Button */}
@@ -158,13 +159,13 @@ function CarScanViewBase({
           <View style={styles.errorBanner} testID="network-error-banner">
             <Text style={styles.errorBannerText}>{errorMessage}</Text>
             {uiState === 'captured' && (
-              <TouchableOpacity
-                style={styles.retryButton}
+              <AppButton
+                title="Retry Analysis"
+                icon="retry"
+                size="compact"
                 onPress={onAnalyse}
                 testID="retry-analyse-button"
-                activeOpacity={0.8}>
-                <Text style={styles.retryButtonText}>↺ Retry Analysis</Text>
-              </TouchableOpacity>
+              />
             )}
           </View>
         ) : null}
@@ -200,7 +201,7 @@ function CarScanViewBase({
       {noDamageDetected && uiState === 'captured' && !isAnalyzing && (
         <View style={styles.noDamageCard} testID="no-damage-detected-card">
           <View style={styles.noDamageBadge}>
-            <Text style={styles.noDamageIcon}>✓</Text>
+            <Icon name="checkmark" color={colors.success} size={26} />
           </View>
           <Text style={styles.noDamageTitle}>No Damage Detected</Text>
           <Text style={styles.noDamageSubtitle}>
@@ -208,20 +209,21 @@ function CarScanViewBase({
             dents, scratches, cracks, or fractures exceeding the threshold.
           </Text>
           <View style={styles.noDamageActions}>
-            <TouchableOpacity
-              style={styles.noDamageRetakeBtn}
+            <AppButton
+              title="Retake Photo"
+              icon="retry"
+              variant="secondary"
               onPress={onRetake}
               testID="no-damage-retake-button"
-              activeOpacity={0.8}>
-              <Text style={styles.noDamageRetakeText}>↺ Retake Photo</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.noDamageProceedBtn}
+              style={styles.noDamageActionButton}
+            />
+            <AppButton
+              title="View Scan Details"
+              icon="arrowForward"
               onPress={onProceedAnyway || onAnalyse}
               testID="no-damage-proceed-button"
-              activeOpacity={0.8}>
-              <Text style={styles.noDamageProceedText}>View Scan Details →</Text>
-            </TouchableOpacity>
+              style={styles.noDamageActionButton}
+            />
           </View>
         </View>
       )}
@@ -231,30 +233,24 @@ function CarScanViewBase({
         !noDamageDetected && (
           <View style={styles.bottomBarContainer} pointerEvents="box-none">
             <View style={styles.actionButtonsRow}>
-              <TouchableOpacity
-                style={styles.retakeButton}
+              <AppButton
+                title="Retake"
+                icon="retry"
+                variant="ghost"
                 onPress={onRetake}
                 disabled={isAnalyzing}
                 testID="retake-button"
-                activeOpacity={0.8}>
-                <Text style={styles.retakeButtonText}>↺ Retake</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[
-                  styles.analyseButton,
-                  isAnalyzing && styles.analyseButtonDisabled,
-                ]}
+                style={styles.actionButtonFlex}
+              />
+              <AppButton
+                title="Analyse Damage"
+                icon="arrowForward"
+                loading={isAnalyzing}
                 onPress={onAnalyse}
                 disabled={isAnalyzing}
                 testID="analyse-button"
-                activeOpacity={0.8}>
-                {isAnalyzing ? (
-                  <ActivityIndicator size="small" color="#FFFFFF" />
-                ) : (
-                  <Text style={styles.analyseButtonText}>Analyse Damage →</Text>
-                )}
-              </TouchableOpacity>
+                style={styles.actionButtonFlexWide}
+              />
             </View>
           </View>
         )
@@ -443,29 +439,26 @@ function ExpoGoCarScanView({onCaptureCompleted}: CarScanScreenProps) {
         <StatusBar style="light" />
         <View style={styles.permissionContent}>
           <View style={styles.cameraIconCircle}>
-            <Text style={styles.cameraIcon}>📷</Text>
+            <Icon name="camera" color={colors.textSecondary} size={36} />
           </View>
           <Text style={styles.permissionTitle}>Camera Access Required</Text>
           <Text style={styles.permissionSubtitle}>
             CarScan uses live camera feed at 30 FPS to guide alignment and
             capture clear vehicle damage frames.
           </Text>
-          <TouchableOpacity
-            style={styles.permissionButton}
+          <AppButton
+            title="Grant Camera Permission"
             onPress={requestPermission}
             testID="grant-permission-button"
-            activeOpacity={0.8}>
-            <Text style={styles.permissionButtonText}>
-              Grant Camera Permission
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.backLink}
+            style={styles.permissionButton}
+          />
+          <AppButton
+            title="Go Back"
+            variant="secondary"
             onPress={() => navigation.goBack()}
             testID="permission-back-button"
-            activeOpacity={0.7}>
-            <Text style={styles.backLinkText}>Go Back</Text>
-          </TouchableOpacity>
+            style={styles.permissionButton}
+          />
         </View>
       </View>
     );
@@ -677,29 +670,26 @@ function VisionCarScanView({onCaptureCompleted}: CarScanScreenProps) {
         <StatusBar style="light" />
         <View style={styles.permissionContent}>
           <View style={styles.cameraIconCircle}>
-            <Text style={styles.cameraIcon}>📷</Text>
+            <Icon name="camera" color={colors.textSecondary} size={36} />
           </View>
           <Text style={styles.permissionTitle}>Camera Access Required</Text>
           <Text style={styles.permissionSubtitle}>
             CarScan uses live camera feed at 30 FPS to guide alignment and
             capture clear vehicle damage frames.
           </Text>
-          <TouchableOpacity
-            style={styles.permissionButton}
+          <AppButton
+            title="Grant Camera Permission"
             onPress={requestPermission}
             testID="grant-permission-button"
-            activeOpacity={0.8}>
-            <Text style={styles.permissionButtonText}>
-              Grant Camera Permission
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.backLink}
+            style={styles.permissionButton}
+          />
+          <AppButton
+            title="Go Back"
+            variant="secondary"
             onPress={() => navigation.goBack()}
             testID="permission-back-button"
-            activeOpacity={0.7}>
-            <Text style={styles.backLinkText}>Go Back</Text>
-          </TouchableOpacity>
+            style={styles.permissionButton}
+          />
         </View>
       </View>
     );
@@ -715,25 +705,22 @@ function VisionCarScanView({onCaptureCompleted}: CarScanScreenProps) {
             No rear camera device detected on this hardware. If you are testing
             on a simulator, you can simulate a still frame capture.
           </Text>
-          <TouchableOpacity
-            style={styles.permissionButton}
+          <AppButton
+            title="Simulate Still Capture"
             onPress={() => {
               setCapturedPhotoUri('file:///tmp/simulated_frame.jpg');
               setUiState('captured');
             }}
             testID="simulate-capture-button"
-            activeOpacity={0.8}>
-            <Text style={styles.permissionButtonText}>
-              Simulate Still Capture
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.backLink}
+            style={styles.permissionButton}
+          />
+          <AppButton
+            title="Go Back"
+            variant="secondary"
             onPress={() => navigation.goBack()}
             testID="no-device-back-button"
-            activeOpacity={0.7}>
-            <Text style={styles.backLinkText}>Go Back</Text>
-          </TouchableOpacity>
+            style={styles.permissionButton}
+          />
         </View>
       </View>
     );
@@ -801,9 +788,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
-  cameraIcon: {
-    fontSize: 36,
-  },
   permissionTitle: {
     ...typography.h2,
     color: colors.textPrimary,
@@ -818,26 +802,8 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   permissionButton: {
-    backgroundColor: colors.accent,
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.md,
-    borderRadius: radius.pill,
     width: '100%',
-    alignItems: 'center',
-    marginBottom: spacing.md,
-  },
-  permissionButtonText: {
-    color: '#FFFFFF',
-    fontWeight: '700',
-    fontSize: 16,
-  },
-  backLink: {
-    paddingVertical: spacing.sm,
-  },
-  backLinkText: {
-    color: colors.textMuted,
-    fontSize: 14,
-    fontWeight: '600',
+    marginBottom: spacing.sm,
   },
   topHudContainer: {
     position: 'absolute',
@@ -855,35 +821,16 @@ const styles = StyleSheet.create({
       ? RNStatusBar.currentHeight + 8
       : 16,
   },
-  hudIconButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(0, 0, 0, 0.55)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-  },
-  hudIconButtonActive: {
-    backgroundColor: colors.accent,
-    borderColor: colors.accent,
-  },
-  hudIconText: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '700',
-  },
   statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.65)',
-    paddingHorizontal: 14,
-    paddingVertical: 7,
+    backgroundColor: withAlpha('#000000', 0.65),
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
     borderRadius: radius.pill,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-    gap: 8,
+    borderColor: withAlpha('#FFFFFF', 0.2),
+    gap: spacing.xs,
   },
   statusDot: {
     width: 8,
@@ -908,30 +855,19 @@ const styles = StyleSheet.create({
   errorBanner: {
     marginHorizontal: spacing.lg,
     marginTop: spacing.sm,
-    backgroundColor: 'rgba(229, 83, 83, 0.95)',
+    backgroundColor: colors.danger,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     borderRadius: radius.md,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 8,
+    gap: spacing.xs,
   },
   errorBannerText: {
-    color: '#FFFFFF',
+    color: colors.textPrimary,
     fontSize: 12,
     flex: 1,
-  },
-  retryButton: {
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: radius.pill,
-  },
-  retryButtonText: {
-    color: colors.danger,
-    fontSize: 11,
-    fontWeight: '700',
   },
   scanningOverlay: {
     position: 'absolute',
@@ -939,7 +875,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.65)',
+    backgroundColor: withAlpha('#000000', 0.65),
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 15,
@@ -990,17 +926,12 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: 'rgba(74, 222, 128, 0.15)',
+    backgroundColor: withAlpha(colors.success, 0.15),
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: spacing.sm,
     borderWidth: 1.5,
     borderColor: colors.success,
-  },
-  noDamageIcon: {
-    color: colors.success,
-    fontSize: 24,
-    fontWeight: '800',
   },
   noDamageTitle: {
     ...typography.h3,
@@ -1019,33 +950,8 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     width: '100%',
   },
-  noDamageRetakeBtn: {
+  noDamageActionButton: {
     flex: 1,
-    height: 44,
-    borderRadius: radius.pill,
-    backgroundColor: colors.surfaceAlt,
-    borderWidth: 1,
-    borderColor: colors.border,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  noDamageRetakeText: {
-    color: colors.textPrimary,
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  noDamageProceedBtn: {
-    flex: 1.2,
-    height: 44,
-    borderRadius: radius.pill,
-    backgroundColor: colors.accent,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  noDamageProceedText: {
-    color: '#FFFFFF',
-    fontSize: 13,
-    fontWeight: '700',
   },
   shutterContainer: {
     position: 'absolute',
@@ -1061,19 +967,19 @@ const styles = StyleSheet.create({
     height: 80,
     borderRadius: 40,
     borderWidth: 4,
-    borderColor: '#FFFFFF',
+    borderColor: colors.textPrimary,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.25)',
+    backgroundColor: withAlpha('#000000', 0.25),
   },
   shutterInnerCircle: {
     width: 66,
     height: 66,
     borderRadius: 33,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.textPrimary,
   },
   shutterInnerDisabled: {
-    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    backgroundColor: withAlpha('#FFFFFF', 0.4),
   },
   bottomBarContainer: {
     position: 'absolute',
@@ -1087,40 +993,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.md,
   },
-  retakeButton: {
+  actionButtonFlex: {
     flex: 1,
-    height: 52,
-    borderRadius: radius.pill,
-    backgroundColor: 'rgba(27, 37, 56, 0.85)',
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
-  retakeButtonText: {
-    color: colors.textPrimary,
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  analyseButton: {
+  actionButtonFlexWide: {
     flex: 1.3,
-    height: 52,
-    borderRadius: radius.pill,
-    backgroundColor: colors.accent,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: colors.accent,
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  analyseButtonDisabled: {
-    opacity: 0.75,
-  },
-  analyseButtonText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '700',
   },
 });
