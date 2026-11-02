@@ -90,19 +90,65 @@ When running against a development backend:
 - Do **not** use `localhost` or `127.0.0.1` as the Backend URL in the app's Settings screen — on a physical device, `localhost` points to the phone itself.
 - Instead, use your computer's local network IP (e.g. `http://192.168.1.50:8000`).
 
-## Standalone Builds (Future Path)
+## Standalone APK Build (EAS)
 
-If an installable APK or production Android App Bundle (AAB) is needed later without Expo Go:
+This project is linked to the EAS project `@vedant_more/car-damage-detection`
+(id: `13be9899-fd9f-4525-bb65-ad8e711c303a`, set in `app.json`'s `extra.eas.projectId`).
+`eas.json` defines two profiles:
 
-1. **EAS Build (Cloud)**:
-   ```bash
-   npx eas build -p android --profile preview
-   ```
-2. **Local Native Build via Prebuild**:
-   ```bash
-   npx expo prebuild
-   ```
-   This generates the native `android/` and `ios/` projects, which can then be built with `./gradlew assembleRelease` using a standard Android SDK / Gradle setup.
+- **`preview`** — builds an installable `.apk` (internal distribution), for sharing a
+  debug/test build directly without going through the Play Store.
+- **`production`** — builds an `.aab` (Android App Bundle) for a real Play Store release.
+
+### Prerequisites
+
+1. `npx eas-cli login` (needs an Expo account with access to this project).
+2. No local Android SDK/Gradle/keystore setup needed — EAS Build runs entirely in the
+   cloud and auto-generates/stores the signing keystore for you on first build.
+
+### Build the preview APK
+
+```bash
+npx eas-cli build --platform android --profile preview
+```
+
+This uploads the project, builds in the cloud, and prints a link to the build page
+(`https://expo.dev/accounts/vedant_more/projects/car-damage-detection/builds/...`) where
+you can watch progress and download the finished `.apk` once it finishes. You can also
+list recent builds and grab the latest download URL with:
+
+```bash
+npx eas-cli build:list --platform android --limit 1
+```
+
+### Install on a physical device
+
+Download the `.apk` from the build page (or the printed artifact URL) onto the phone and
+open it; Android will prompt to allow installs from this source the first time. This is a
+debug/internal build, not a Play Store install, so verify on-device: app launch, the
+Settings screen (configure the backend URL + API key — see "Physical Device Network
+Configuration" above), and a full inspection flow (capture → detect → results → claim).
+There is currently no login/auth screen in the app, so "login" isn't part of this flow.
+
+### App icon, splash screen, and permissions
+
+- App icon / Android adaptive icon / splash screen are generated from
+  `assets/branding/logo.svg` (also the source for `assets/icon.png`,
+  `assets/android-icon-foreground.png`, `assets/android-icon-background.png`,
+  `assets/android-icon-monochrome.png`, and `assets/splash-icon.png`). Regenerate with
+  `rsvg-convert` (or any SVG rasterizer) if the logo changes.
+- `app.json`'s `android.permissions` explicitly declares `CAMERA` and `INTERNET` (video/
+  photo capture and reaching the detection backend); `expo-image-picker`/`expo-camera`
+  also inject their own required permissions automatically via their config plugins.
+
+### Local native build (alternative, no EAS account needed)
+
+```bash
+npx expo prebuild
+```
+
+This generates the native `android/` and `ios/` projects, which can then be built with
+`./gradlew assembleRelease` using a standard local Android SDK / Gradle setup.
 
 ## Running Tests and Lint
 

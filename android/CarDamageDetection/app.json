@@ -12,11 +12,15 @@
     "android": {
       "package": "com.cardamagedetection",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#0B1220",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
+      "permissions": [
+        "CAMERA",
+        "INTERNET"
+      ],
       "predictiveBackGestureEnabled": false
     },
     "web": {
@@ -24,7 +28,22 @@
     },
     "plugins": [
       "expo-video",
-      "expo-asset"
-    ]
+      "expo-asset",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 220,
+          "resizeMode": "contain",
+          "backgroundColor": "#0B1220"
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "13be9899-fd9f-4525-bb65-ad8e711c303a"
+      }
+    },
+    "owner": "vedant_more"
   }
 }
