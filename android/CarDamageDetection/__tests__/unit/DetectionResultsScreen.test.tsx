@@ -81,7 +81,7 @@ describe('DetectionResultsScreen (DamageOverlay)', () => {
     );
   });
 
-  it('clears state and returns to CarScan when Retake Scan is pressed', async () => {
+  it('clears state and returns to the method-choice screen when Retake Scan is pressed', async () => {
     const {getByTestId} = await render(
       <InspectionProvider
         initialValues={{
@@ -94,6 +94,6 @@ describe('DetectionResultsScreen (DamageOverlay)', () => {
 
     fireEvent.press(getByTestId('retake-scan-button'));
 
-    expect(mockNavigate).toHaveBeenCalledWith('CarScan');
+    expect(mockNavigate).toHaveBeenCalledWith('ImageSelection');
   });
 });

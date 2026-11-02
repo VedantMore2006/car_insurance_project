@@ -8,5 +8,6 @@ module.exports = {
     '^expo-camera$': '<rootDir>/__mocks__/expo-camera.tsx',
     '^react-native-vision-camera$':
       '<rootDir>/__mocks__/react-native-vision-camera.tsx',
+    '^@expo/vector-icons$': '<rootDir>/__mocks__/@expo/vector-icons.tsx',
   },
 };

@@ -1,33 +1,24 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Alert,
-} from 'react-native';
+import {View, Text, StyleSheet, ScrollView, Alert} from 'react-native';
 import * as Clipboard from 'expo-clipboard';
-import {useNavigation, useRoute, RouteProp} from '@react-navigation/native';
-import {NativeStackNavigationProp} from '@react-navigation/native-stack';
+import {useRoute, RouteProp} from '@react-navigation/native';
 import ScreenContainer from '../../../components/ScreenContainer';
 import AppHeader from '../../../components/AppHeader';
 import AppButton from '../../../components/AppButton';
+import Badge from '../../../components/Badge';
+import Icon from '../../../components/Icon';
+import useExitInspection from '../../../hooks/useExitInspection';
 import {colors, spacing, radius, typography} from '../../../config/theme';
-import {
-  InspectionStackParamList,
-  RootStackParamList,
-} from '../../../app/navigation/navigationTypes';
+import {InspectionStackParamList} from '../../../app/navigation/navigationTypes';
 import {clearSession} from '../inspectionSession';
 import {useInspection} from '../../../context/InspectionContext';
 
-type RootNav = NativeStackNavigationProp<RootStackParamList>;
 type Rt = RouteProp<InspectionStackParamList, 'Confirmation'>;
 
 export default function ConfirmationScreen() {
-  const rootNavigation = useNavigation<RootNav>();
   const route = useRoute<Rt>();
   const {resetInspectionState} = useInspection();
+  const exitInspection = useExitInspection();
 
   const {
     referenceNumber = 'CLM-2026-UNKNOWN',
@@ -65,19 +56,13 @@ export default function ConfirmationScreen() {
   const handleDone = () => {
     resetInspectionState();
     clearSession();
-    // Navigate back to Dashboard root
-    rootNavigation.navigate('MainTabs', {
-      screen: 'Dashboard',
-    });
+    exitInspection('Dashboard');
   };
 
   const handleViewHistory = () => {
     resetInspectionState();
     clearSession();
-    // Navigate to History tab
-    rootNavigation.navigate('MainTabs', {
-      screen: 'History',
-    });
+    exitInspection('History');
   };
 
   return (
@@ -91,7 +76,7 @@ export default function ConfirmationScreen() {
         {/* 1. Success Hero Badge */}
         <View style={styles.heroContainer}>
           <View style={styles.successBadgeCircle} testID="success-check-badge">
-            <Text style={styles.checkmarkIcon}>✓</Text>
+            <Icon name="checkmark" color={colors.success} size={36} />
           </View>
           <Text style={styles.heroTitle}>Claim Registered</Text>
           <Text style={styles.heroSubtitle}>
@@ -100,17 +85,9 @@ export default function ConfirmationScreen() {
           </Text>
 
           {isOffline ? (
-            <View style={styles.offlineNoticeBadge}>
-              <Text style={styles.offlineNoticeText}>
-                OFFLINE RECORDED • WILL SYNC WHEN ONLINE
-              </Text>
-            </View>
+            <Badge tone="warning" label="OFFLINE RECORDED • WILL SYNC WHEN ONLINE" />
           ) : (
-            <View style={styles.verifiedBadge}>
-              <Text style={styles.verifiedText}>
-                VERIFIED BY CAR DAMAGE DETECTION AI
-              </Text>
-            </View>
+            <Badge tone="accent" label="VERIFIED BY CAR DAMAGE DETECTION AI" />
           )}
         </View>
 
@@ -122,13 +99,14 @@ export default function ConfirmationScreen() {
             testID="claim-reference-number">
             {referenceNumber}
           </Text>
-          <TouchableOpacity
-            style={styles.copyBtn}
+          <AppButton
+            title="Tap to Copy Reference"
+            icon="copy"
+            variant="secondary"
+            size="compact"
             onPress={handleCopyReference}
-            activeOpacity={0.7}
-            testID="copy-reference-button">
-            <Text style={styles.copyBtnText}>📋 Tap to Copy Reference</Text>
-          </TouchableOpacity>
+            testID="copy-reference-button"
+          />
         </View>
 
         {/* 3. Detailed Receipt Breakdown Card */}
@@ -236,11 +214,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: spacing.xs,
   },
-  checkmarkIcon: {
-    fontSize: 32,
-    color: colors.success,
-    fontWeight: '800',
-  },
   heroTitle: {
     fontSize: typography.h1.fontSize,
     fontWeight: '800',
@@ -252,36 +225,6 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     textAlign: 'center',
     paddingHorizontal: spacing.md,
-  },
-  verifiedBadge: {
-    backgroundColor: 'rgba(61, 139, 255, 0.15)',
-    paddingHorizontal: spacing.md,
-    paddingVertical: 4,
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    borderColor: colors.accentMuted,
-    marginTop: spacing.xs,
-  },
-  verifiedText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: colors.accent,
-    letterSpacing: 0.5,
-  },
-  offlineNoticeBadge: {
-    backgroundColor: 'rgba(245, 166, 35, 0.15)',
-    paddingHorizontal: spacing.md,
-    paddingVertical: 4,
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    borderColor: colors.warning,
-    marginTop: spacing.xs,
-  },
-  offlineNoticeText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: colors.warning,
-    letterSpacing: 0.5,
   },
   referenceCard: {
     backgroundColor: colors.surface,
@@ -304,19 +247,6 @@ const styles = StyleSheet.create({
     color: colors.accent,
     letterSpacing: 2,
     marginVertical: spacing.xs,
-  },
-  copyBtn: {
-    backgroundColor: colors.surfaceAlt,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  copyBtnText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: colors.textSecondary,
   },
   receiptCard: {
     backgroundColor: colors.surface,

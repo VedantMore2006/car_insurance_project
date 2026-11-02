@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {View, FlatList, StyleSheet, LayoutChangeEvent} from 'react-native';
+import {View, FlatList, StyleSheet, LayoutChangeEvent, Alert} from 'react-native';
 import {useNavigation, useRoute, RouteProp} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import ScreenContainer from '../../../components/ScreenContainer';
@@ -63,7 +63,7 @@ export default function DetectionResultsScreen() {
     setSaved(true);
   };
 
-  const handleProceedToClaim = () => {
+  const goToClaimForm = () => {
     navigation.navigate('ClaimForm', {
       imageUri: activeImageUri,
       mediaType,
@@ -71,15 +71,54 @@ export default function DetectionResultsScreen() {
     });
   };
 
-  const handleRetakeScan = () => {
-    resetInspectionState();
-    navigation.navigate('CarScan');
+  const handleProceedToClaim = () => {
+    if (detections.length === 0) {
+      Alert.alert(
+        'No damage detected',
+        'The scan found no damage. Are you sure you want to file a claim?',
+        [
+          {text: 'Cancel', style: 'cancel'},
+          {text: 'File Claim Anyway', style: 'destructive', onPress: goToClaimForm},
+        ],
+      );
+      return;
+    }
+    goToClaimForm();
   };
 
-  const handleDone = () => {
+  const handleRetakeScan = () => {
+    resetInspectionState();
+    // Goes to the method-choice screen rather than straight into the live camera, since a
+    // user who arrived here via gallery/video pick shouldn't be forced into CarScan to retry.
+    navigation.navigate('ImageSelection');
+  };
+
+  const exitToDashboard = () => {
     resetInspectionState();
     clearSession();
     navigation.getParent()?.goBack();
+  };
+
+  const handleDone = () => {
+    if (result && !saved) {
+      Alert.alert(
+        'Save this inspection?',
+        'You haven\'t saved this inspection to history yet. It will be lost if you leave now.',
+        [
+          {text: 'Leave Without Saving', style: 'destructive', onPress: exitToDashboard},
+          {
+            text: 'Save & Leave',
+            onPress: async () => {
+              await handleSave();
+              exitToDashboard();
+            },
+          },
+          {text: 'Cancel', style: 'cancel'},
+        ],
+      );
+      return;
+    }
+    exitToDashboard();
   };
 
   const handleRetry = () => {

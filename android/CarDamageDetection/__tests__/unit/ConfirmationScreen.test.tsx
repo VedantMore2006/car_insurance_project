@@ -4,6 +4,7 @@ import ConfirmationScreen from '../../src/features/inspection/screens/Confirmati
 import * as sessionModule from '../../src/features/inspection/inspectionSession';
 
 const mockNavigate = jest.fn();
+const mockReset = jest.fn();
 
 jest.mock('@react-navigation/native', () => {
   const actualNav = jest.requireActual('@react-navigation/native');
@@ -11,6 +12,7 @@ jest.mock('@react-navigation/native', () => {
     ...actualNav,
     useNavigation: () => ({
       navigate: mockNavigate,
+      reset: mockReset,
     }),
     useRoute: () => ({
       params: {
@@ -70,8 +72,9 @@ describe('ConfirmationScreen Component', () => {
     fireEvent.press(doneButton);
 
     expect(clearSessionSpy).toHaveBeenCalledTimes(1);
-    expect(mockNavigate).toHaveBeenCalledWith('MainTabs', {
-      screen: 'Dashboard',
+    expect(mockReset).toHaveBeenCalledWith({
+      index: 0,
+      routes: [{name: 'MainTabs', params: {screen: 'Dashboard'}}],
     });
 
     clearSessionSpy.mockRestore();
@@ -85,8 +88,9 @@ describe('ConfirmationScreen Component', () => {
     fireEvent.press(historyButton);
 
     expect(clearSessionSpy).toHaveBeenCalledTimes(1);
-    expect(mockNavigate).toHaveBeenCalledWith('MainTabs', {
-      screen: 'History',
+    expect(mockReset).toHaveBeenCalledWith({
+      index: 0,
+      routes: [{name: 'MainTabs', params: {screen: 'History'}}],
     });
 
     clearSessionSpy.mockRestore();

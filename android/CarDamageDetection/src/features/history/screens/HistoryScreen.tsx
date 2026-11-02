@@ -1,16 +1,10 @@
 import React, {useCallback, useState} from 'react';
-import {
-  View,
-  Text,
-  FlatList,
-  Image,
-  StyleSheet,
-  Pressable,
-  Alert,
-} from 'react-native';
+import {View, Text, FlatList, Image, StyleSheet, Alert} from 'react-native';
 import {useFocusEffect} from '@react-navigation/native';
 import ScreenContainer from '../../../components/ScreenContainer';
 import AppHeader from '../../../components/AppHeader';
+import AppButton from '../../../components/AppButton';
+import Badge from '../../../components/Badge';
 import EmptyState from '../../../components/EmptyState';
 import {colors, radius, spacing, typography} from '../../../config/theme';
 import {
@@ -91,34 +85,29 @@ export default function HistoryScreen() {
                   <Text style={styles.date}>
                     {formatDateTime(item.createdAt)}
                   </Text>
-                  <View
-                    style={[
-                      styles.typeBadge,
-                      item.mediaType === 'video' && styles.videoBadge,
-                    ]}>
-                    <Text
-                      style={[
-                        styles.typeBadgeText,
-                        item.mediaType === 'video' && styles.videoBadgeText,
-                      ]}>
-                      {item.mediaType === 'video'
+                  <Badge
+                    tone={item.mediaType === 'video' ? 'accent' : 'neutral'}
+                    label={
+                      item.mediaType === 'video'
                         ? `VIDEO ${
                             item.duration ? formatDuration(item.duration) : ''
                           }`.trim()
-                        : 'PHOTO'}
-                    </Text>
-                  </View>
+                        : 'PHOTO'
+                    }
+                  />
                 </View>
                 <Text style={styles.count}>
                   {formatDetectionCount(item.detectionCount)}
                 </Text>
                 <Text style={styles.status}>{item.status}</Text>
               </View>
-              <Pressable
+              <AppButton
+                title="Delete"
+                variant="danger"
+                size="compact"
                 onPress={() => handleDelete(item.id)}
-                testID="history-delete-button">
-                <Text style={styles.delete}>Delete</Text>
-              </Pressable>
+                testID="history-delete-button"
+              />
             </View>
           )}
         />
@@ -154,25 +143,6 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   date: {...typography.caption, color: colors.textMuted},
-  typeBadge: {
-    backgroundColor: colors.surfaceAlt,
-    paddingHorizontal: 4,
-    paddingVertical: 1,
-    borderRadius: radius.sm,
-  },
-  videoBadge: {
-    backgroundColor: 'rgba(56, 189, 248, 0.15)',
-  },
-  typeBadgeText: {
-    fontSize: 9,
-    fontWeight: '700',
-    color: colors.textMuted,
-    letterSpacing: 0.5,
-  },
-  videoBadgeText: {
-    color: colors.accent,
-  },
   count: {...typography.body, color: colors.textPrimary},
   status: {...typography.caption, color: colors.textSecondary},
-  delete: {...typography.caption, color: colors.danger, fontWeight: '600'},
 });
