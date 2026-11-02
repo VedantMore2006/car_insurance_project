@@ -1,0 +1,49 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#121A2B"/>
+      <stop offset="1" stop-color="#0B1220"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#5BA2FF"/>
+      <stop offset="1" stop-color="#3D8BFF"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="512" height="512" rx="104" fill="url(#bg)"/>
+
+  <!-- Scan corner brackets (detection framing motif) -->
+  <g stroke="#3D8BFF" stroke-width="10" stroke-linecap="round" opacity="0.55">
+    <path d="M100 150 V110 a10 10 0 0 1 10 -10 H150" fill="none"/>
+    <path d="M412 150 V110 a10 10 0 0 1 -10 -10 H362" fill="none"/>
+    <path d="M100 362 V402 a10 10 0 0 0 10 10 H150" fill="none"/>
+    <path d="M412 362 V402 a10 10 0 0 0 -10 10 H362" fill="none"/>
+  </g>
+
+  <!-- Car silhouette -->
+  <g>
+    <path d="M128 318
+             q0 -14 14 -14 h10
+             l24 -52 q8 -17 27 -17 h106
+             q19 0 27 17 l24 52 h10
+             q14 0 14 14 v46
+             q0 12 -12 12 h-16
+             q-6 22 -28 22 t-28 -22 H212
+             q-6 22 -28 22 t-28 -22 h-16
+             q-12 0 -12 -12 z"
+          fill="url(#accent)"/>
+    <path d="M192 235 l-18 42 h164 l-18 -42
+             q-4 -9 -14 -9 H206 q-10 0 -14 9 z"
+          fill="#0B1220" opacity="0.35"/>
+    <circle cx="184" cy="364" r="20" fill="#0B1220"/>
+    <circle cx="184" cy="364" r="9" fill="#9CC4FF"/>
+    <circle cx="328" cy="364" r="20" fill="#0B1220"/>
+    <circle cx="328" cy="364" r="9" fill="#9CC4FF"/>
+  </g>
+
+  <!-- Damage mark (crack) over the front panel, the one asymmetric accent -->
+  <path d="M236 292 l14 -18 10 12 16 -22 8 16"
+        stroke="#E55353" stroke-width="7" stroke-linecap="round"
+        stroke-linejoin="round" fill="none"/>
+</svg>

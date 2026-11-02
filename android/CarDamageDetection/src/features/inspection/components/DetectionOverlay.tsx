@@ -4,6 +4,7 @@ import {colors, typography} from '../../../config/theme';
 import {Detection} from '../types/detection.types';
 import {computeContainBox, scaleBoxToDisplay} from '../../../utils/imageUtils';
 import {formatConfidence} from '../../../utils/formatters';
+import {getSeverityColor} from '../../../utils/damageSeverity';
 
 interface DetectionOverlayProps {
   detections: Detection[];
@@ -53,19 +54,23 @@ export default function DetectionOverlay({
           imageBox.width,
           imageBox.height,
         );
+        const color = getSeverityColor(detection.confidence);
         return (
           <View
             key={`${detection.classId}-${index}`}
             style={[
               styles.box,
               {
+                borderColor: color,
                 left: imageBox.x + scaled.left,
                 top: imageBox.y + scaled.top,
                 width: scaled.width,
                 height: scaled.height,
               },
             ]}>
-            <Text style={styles.label} numberOfLines={1}>
+            <Text
+              style={[styles.label, {backgroundColor: color}]}
+              numberOfLines={1}>
               {detection.className} {formatConfidence(detection.confidence)}
             </Text>
           </View>
@@ -79,13 +84,12 @@ const styles = StyleSheet.create({
   box: {
     position: 'absolute',
     borderWidth: 2,
-    borderColor: colors.overlayBox,
     borderRadius: 2,
   },
   label: {
     ...typography.caption,
-    color: colors.textPrimary,
-    backgroundColor: colors.overlayBox,
+    color: colors.background,
+    fontWeight: '700',
     position: 'absolute',
     top: -18,
     left: -2,

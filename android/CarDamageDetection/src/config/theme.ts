@@ -30,6 +30,13 @@ export const spacing = {
   xxl: 48,
 } as const;
 
+/**
+ * Corner-radius rule (keep all new UI on this, don't invent new values per screen):
+ * - `pill`: small status badges/chips only
+ * - `md`: the default for buttons, cards, inputs -- almost everything
+ * - `lg`: reserved for full-bleed/hero containers only (rare)
+ * - `sm`: reserved for tight nested elements inside a `md` container (e.g. a thumbnail)
+ */
 export const radius = {
   sm: 6,
   md: 12,
@@ -50,6 +57,19 @@ export const typography = {
   body: {fontSize: 15, fontWeight: '400' as const},
   caption: {fontSize: 12, fontWeight: '400' as const},
 };
+
+/**
+ * Applies alpha to a theme color for tinted surfaces/badges (e.g. a success-tinted banner
+ * background). Replaces ad hoc `rgba(r, g, b, 0.15)` literals scattered across screens with one
+ * shared conversion from the existing hex tokens, so tints always track the real token value.
+ */
+export function withAlpha(hexColor: string, alpha: number): string {
+  const hex = hexColor.replace('#', '');
+  const r = parseInt(hex.substring(0, 2), 16);
+  const g = parseInt(hex.substring(2, 4), 16);
+  const b = parseInt(hex.substring(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
 
 export const theme = {colors, spacing, radius, elevation, typography};
 export type Theme = typeof theme;
