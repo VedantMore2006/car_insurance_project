@@ -3,6 +3,8 @@ import {View, Text, TextInput, StyleSheet, Alert} from 'react-native';
 import ScreenContainer from '../../../components/ScreenContainer';
 import AppHeader from '../../../components/AppHeader';
 import AppButton from '../../../components/AppButton';
+import Card from '../../../components/Card';
+import Icon, {IconName} from '../../../components/Icon';
 import {colors, radius, spacing, typography} from '../../../config/theme';
 import {
   getSettings,
@@ -89,121 +91,148 @@ export default function SettingsScreen() {
         title="Settings"
         subtitle={`Version ${appConfig.appVersion}`}
       />
-      <View style={styles.section}>
-        <Text style={styles.label}>Backend URL</Text>
-        <Text style={styles.helper}>
-          No backend is deployed with this app yet. Enter the URL of a detection
-          server once one is available; localhost will NOT work on a physical
-          device since it refers to the device itself, not your computer.
-        </Text>
-        <TextInput
-          style={styles.input}
-          value={apiBaseUrl}
-          onChangeText={setApiBaseUrlInput}
-          placeholder="https://your-backend.example.com"
-          placeholderTextColor={colors.textMuted}
-          autoCapitalize="none"
-          testID="api-base-url-input"
-        />
-        {urlError ? <Text style={styles.error}>{urlError}</Text> : null}
-        <AppButton
-          title={testStatus === 'testing' ? 'Testing...' : 'Test Connection'}
-          variant="secondary"
-          loading={testStatus === 'testing'}
-          onPress={handleTestConnection}
-          style={styles.inlineButton}
-          testID="test-connection-button"
-        />
-        {testStatus === 'ok' && (
-          <Text style={styles.success}>Connected successfully.</Text>
-        )}
-        {testStatus === 'failed' && (
-          <Text style={styles.error}>
-            Could not reach the backend at this URL.
+      <View style={styles.content}>
+        <SectionCard icon="link" title="Backend URL">
+          <Text style={styles.helper}>
+            No backend is deployed with this app yet. Enter the URL of a detection
+            server once one is available; localhost will NOT work on a physical
+            device since it refers to the device itself, not your computer.
           </Text>
-        )}
-      </View>
+          <TextInput
+            style={styles.input}
+            value={apiBaseUrl}
+            onChangeText={setApiBaseUrlInput}
+            placeholder="https://your-backend.example.com"
+            placeholderTextColor={colors.textMuted}
+            autoCapitalize="none"
+            testID="api-base-url-input"
+          />
+          {urlError ? <Text style={styles.error}>{urlError}</Text> : null}
+          <AppButton
+            title={testStatus === 'testing' ? 'Testing...' : 'Test Connection'}
+            variant="secondary"
+            loading={testStatus === 'testing'}
+            onPress={handleTestConnection}
+            testID="test-connection-button"
+          />
+          {testStatus === 'ok' && (
+            <Text style={styles.success}>Connected successfully.</Text>
+          )}
+          {testStatus === 'failed' && (
+            <Text style={styles.error}>
+              Could not reach the backend at this URL.
+            </Text>
+          )}
+        </SectionCard>
 
-      <View style={styles.section}>
-        <Text style={styles.label}>API Key (Optional / VPS Security)</Text>
-        <Text style={styles.helper}>
-          If your VPS or inference server has API key authentication enabled,
-          enter it here. It will be sent via the X-API-Key header with every
-          detection request.
-        </Text>
-        <TextInput
-          style={styles.input}
-          value={apiKey}
-          onChangeText={setApiKeyInput}
-          placeholder="e.g. cardd_secret_key_..."
-          placeholderTextColor={colors.textMuted}
-          autoCapitalize="none"
-          autoCorrect={false}
-          secureTextEntry
-          testID="api-key-input"
-        />
-      </View>
+        <SectionCard icon="key" title="API Key (Optional / VPS Security)">
+          <Text style={styles.helper}>
+            If your VPS or inference server has API key authentication enabled,
+            enter it here. It will be sent via the X-API-Key header with every
+            detection request.
+          </Text>
+          <TextInput
+            style={styles.input}
+            value={apiKey}
+            onChangeText={setApiKeyInput}
+            placeholder="e.g. cardd_secret_key_..."
+            placeholderTextColor={colors.textMuted}
+            autoCapitalize="none"
+            autoCorrect={false}
+            secureTextEntry
+            testID="api-key-input"
+          />
+        </SectionCard>
 
-      <View style={styles.section}>
-        <Text style={styles.label}>Confidence Threshold</Text>
-        <Text style={styles.helper}>
-          This value is saved and will be sent with future detection requests.
-          It currently has no effect unless/until a real backend confirms it
-          supports this parameter.
-        </Text>
-        <TextInput
-          style={styles.input}
-          value={confidenceThreshold}
-          onChangeText={setConfidenceThreshold}
-          keyboardType="decimal-pad"
-          placeholder="0.25"
-          placeholderTextColor={colors.textMuted}
-          testID="confidence-threshold-input"
-        />
-        {thresholdError ? (
-          <Text style={styles.error}>{thresholdError}</Text>
-        ) : null}
-      </View>
+        <SectionCard icon="checkmark" title="Confidence Threshold">
+          <Text style={styles.helper}>
+            This value is saved and will be sent with future detection requests.
+            It currently has no effect unless/until a real backend confirms it
+            supports this parameter.
+          </Text>
+          <TextInput
+            style={styles.input}
+            value={confidenceThreshold}
+            onChangeText={setConfidenceThreshold}
+            keyboardType="decimal-pad"
+            placeholder="0.25"
+            placeholderTextColor={colors.textMuted}
+            testID="confidence-threshold-input"
+          />
+          {thresholdError ? (
+            <Text style={styles.error}>{thresholdError}</Text>
+          ) : null}
+        </SectionCard>
 
-      <AppButton
-        title="Save Settings"
-        onPress={handleSave}
-        testID="save-settings-button"
-      />
-
-      <View style={styles.section}>
         <AppButton
-          title="Clear History"
-          variant="danger"
-          onPress={handleClearHistory}
-          testID="clear-history-button"
+          title="Save Settings"
+          onPress={handleSave}
+          testID="save-settings-button"
         />
-      </View>
 
-      <View style={styles.section}>
-        <Text style={styles.label}>Privacy</Text>
-        <Text style={styles.helper}>
-          Photos you select are only used to run damage detection. Inspection
-          metadata (date, detection count, and a reference to the image file) is
-          stored locally on this device. Full images are never written into app
-          storage/AsyncStorage — only file references.
-        </Text>
+        <SectionCard icon="delete" title="Danger Zone">
+          <Text style={styles.helper}>
+            Permanently deletes every saved inspection from this device. This
+            cannot be undone.
+          </Text>
+          <AppButton
+            title="Clear History"
+            variant="danger"
+            onPress={handleClearHistory}
+            testID="clear-history-button"
+          />
+        </SectionCard>
+
+        <SectionCard icon="shield" title="Privacy">
+          <Text style={styles.helper}>
+            Photos you select are only used to run damage detection. Inspection
+            metadata (date, detection count, and a reference to the image file) is
+            stored locally on this device. Full images are never written into app
+            storage/AsyncStorage — only file references.
+          </Text>
+        </SectionCard>
       </View>
     </ScreenContainer>
   );
 }
 
+function SectionCard({
+  icon,
+  title,
+  children,
+}: {
+  icon: IconName;
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <Card>
+      <View style={styles.sectionHeader}>
+        <Icon name={icon} color={colors.accent} size={16} />
+        <Text style={styles.label}>{title}</Text>
+      </View>
+      {children}
+    </Card>
+  );
+}
+
 const styles = StyleSheet.create({
-  section: {
+  content: {
     paddingHorizontal: spacing.lg,
-    marginTop: spacing.lg,
-    gap: spacing.sm,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.xl,
+    gap: spacing.md,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
   },
   label: {...typography.h3, color: colors.textPrimary},
   helper: {...typography.caption, color: colors.textMuted},
   input: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.sm,
+    backgroundColor: colors.surfaceAlt,
+    borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
     color: colors.textPrimary,
@@ -211,5 +240,4 @@ const styles = StyleSheet.create({
   },
   error: {...typography.caption, color: colors.danger},
   success: {...typography.caption, color: colors.success},
-  inlineButton: {marginTop: spacing.xs},
 });

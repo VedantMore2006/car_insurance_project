@@ -26,6 +26,9 @@ const ICONS = {
   delete: 'trash-outline',
   video: 'videocam-outline',
   image: 'image-outline',
+  key: 'key-outline',
+  shield: 'shield-checkmark-outline',
+  link: 'link-outline',
 } as const;
 
 export type IconName = keyof typeof ICONS;
