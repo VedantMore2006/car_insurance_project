@@ -1,14 +1,14 @@
 import React, {useState} from 'react';
-import {View, FlatList, StyleSheet, LayoutChangeEvent, Alert} from 'react-native';
+import {View, Text, FlatList, StyleSheet, LayoutChangeEvent, Alert} from 'react-native';
 import {useNavigation, useRoute, RouteProp} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import ScreenContainer from '../../../components/ScreenContainer';
-import AppHeader from '../../../components/AppHeader';
 import AppButton from '../../../components/AppButton';
 import VideoPreview from '../../../components/VideoPreview';
 import DamageOverlayView from '../../../components/DamageOverlayView';
 import EmptyState from '../../../components/EmptyState';
-import {spacing} from '../../../config/theme';
+import SeverityBadge from '../../../components/SeverityBadge';
+import {colors, spacing, typography} from '../../../config/theme';
 import {InspectionStackParamList} from '../../../app/navigation/navigationTypes';
 import DetectionOverlay from '../components/DetectionOverlay';
 import DetectionResultCard from '../components/DetectionResultCard';
@@ -16,6 +16,7 @@ import {getSession, clearSession} from '../inspectionSession';
 import {addHistoryEntry} from '../../../services/storage/historyStorage';
 import {formatDetectionCount} from '../../../utils/formatters';
 import {useInspection} from '../../../context/InspectionContext';
+import {SeverityLevel, getSeverityLevel} from '../../../utils/damageSeverity';
 
 type Nav = NativeStackNavigationProp<
   InspectionStackParamList,
@@ -45,6 +46,16 @@ export default function DetectionResultsScreen() {
 
   const result = damageResults || getSession().result;
   const detections = result?.detections ?? [];
+
+  const severityCounts = detections.reduce<Partial<Record<SeverityLevel, number>>>(
+    (acc, d) => {
+      const level = getSeverityLevel(d.confidence);
+      acc[level] = (acc[level] ?? 0) + 1;
+      return acc;
+    },
+    {},
+  );
+  const severityOrder: SeverityLevel[] = ['major', 'moderate', 'minor'];
 
   const handleSave = async () => {
     if (!result) {
@@ -132,7 +143,6 @@ export default function DetectionResultsScreen() {
   if (!result) {
     return (
       <ScreenContainer>
-        <AppHeader title="Results" />
         <EmptyState
           title="No result available"
           message="Please run the analysis again."
@@ -155,10 +165,18 @@ export default function DetectionResultsScreen() {
 
   return (
     <ScreenContainer scroll>
-      <AppHeader
-        title={isVideo ? 'Video Detection Results' : 'Detection Results'}
-        subtitle={formatDetectionCount(detections.length)}
-      />
+      <View style={styles.summaryBar}>
+        <Text style={styles.summaryCount}>{formatDetectionCount(detections.length)}</Text>
+        {detections.length > 0 && (
+          <View style={styles.summaryBadges}>
+            {severityOrder
+              .filter(level => severityCounts[level])
+              .map(level => (
+                <SeverityBadge key={level} level={level} count={severityCounts[level]} />
+              ))}
+          </View>
+        )}
+      </View>
       <View style={styles.content}>
         {isVideo ? (
           <VideoPreview
@@ -236,6 +254,14 @@ export default function DetectionResultsScreen() {
 }
 
 const styles = StyleSheet.create({
+  summaryBar: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.sm,
+    gap: spacing.xs,
+  },
+  summaryCount: {...typography.h2, color: colors.textPrimary},
+  summaryBadges: {flexDirection: 'row', gap: spacing.xs, flexWrap: 'wrap'},
   content: {paddingHorizontal: spacing.lg, gap: spacing.md},
   list: {marginTop: spacing.md},
   actions: {marginTop: spacing.lg, gap: spacing.sm},

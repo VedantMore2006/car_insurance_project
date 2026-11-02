@@ -4,8 +4,9 @@ import * as ImagePicker from 'expo-image-picker';
 import {useNavigation} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import ScreenContainer from '../../../components/ScreenContainer';
-import AppHeader from '../../../components/AppHeader';
 import AppButton from '../../../components/AppButton';
+import Card from '../../../components/Card';
+import Badge from '../../../components/Badge';
 import {colors, radius, spacing, typography} from '../../../config/theme';
 import {
   resolveMediaMimeType,
@@ -108,14 +109,9 @@ export default function ImageSelectionScreen() {
 
   return (
     <ScreenContainer scroll>
-      <AppHeader
-        title="Vehicle Inspection"
-        subtitle="Select or capture a photo or video stream of the vehicle"
-      />
       <View style={styles.content}>
         <Text style={styles.guidance}>
-          You can inspect vehicle damage using either high-resolution photos
-          (JPEG, PNG up to 20MB) or a video stream (MP4, MOV up to 60s, 100MB).
+          Pick how you'd like to inspect this vehicle.
         </Text>
 
         {errors.length > 0 && (
@@ -128,70 +124,60 @@ export default function ImageSelectionScreen() {
           </View>
         )}
 
-        {/* Live Vision Camera CarScan Section */}
-        <View style={styles.cardSection}>
-          <View style={styles.cardHeader}>
-            <Text style={[styles.sectionBadge, styles.liveBadge]}>LIVE 30 FPS</Text>
-            <Text style={styles.cardTitle}>CarScan Camera Guide</Text>
-          </View>
-          <Text style={styles.cardDescription}>
-            Full-screen camera with real-time vehicle silhouette guide and circular shutter button.
+        {/* Primary path: live CarScan -- one bold CTA, not a card competing with the others */}
+        <Card style={styles.heroCard}>
+          <Badge tone="success" label="LIVE · 30 FPS" />
+          <Text style={styles.heroTitle}>Live Vehicle Scan</Text>
+          <Text style={styles.heroDescription}>
+            Real-time camera guide with a vehicle silhouette overlay -- the fastest,
+            most accurate way to capture damage.
           </Text>
-          <View style={styles.buttonStack}>
-            <AppButton
-              title="Launch CarScan Screen"
-              onPress={() => navigation.navigate('CarScan')}
-              testID="launch-car-scan-button"
-            />
-          </View>
-        </View>
+          <AppButton
+            title="Start Live Scan"
+            icon="camera"
+            onPress={() => navigation.navigate('CarScan')}
+            testID="launch-car-scan-button"
+            style={styles.heroButton}
+          />
+        </Card>
 
-        {/* Video stream section */}
-        <View style={styles.cardSection}>
-          <View style={styles.cardHeader}>
-            <Text style={styles.sectionBadge}>VIDEO STREAM</Text>
-            <Text style={styles.cardTitle}>Video Inspection</Text>
-          </View>
-          <Text style={styles.cardDescription}>
-            Scan around the vehicle or damaged panel for a continuous inspection.
-          </Text>
-          <View style={styles.buttonStack}>
-            <AppButton
-              title="Record Live Video"
-              onPress={() => handleSelectMedia('camera_video')}
-              testID="record-video-button"
-            />
-            <AppButton
-              title="Choose Video from Gallery"
-              variant="secondary"
-              onPress={() => handleSelectMedia('gallery_video')}
-              testID="choose-video-button"
-            />
-          </View>
-        </View>
+        <Text style={styles.sectionLabel}>OR USE AN EXISTING FILE</Text>
 
-        {/* Photo capture section */}
-        <View style={styles.cardSection}>
-          <View style={styles.cardHeader}>
-            <Text style={styles.sectionBadge}>STILL PHOTO</Text>
-            <Text style={styles.cardTitle}>Photo Inspection</Text>
-          </View>
-          <Text style={styles.cardDescription}>
-            Capture a clear, well-lit snapshot directly of the affected area.
-          </Text>
-          <View style={styles.buttonStack}>
-            <AppButton
-              title="Take Photo with Camera"
-              onPress={() => handleSelectMedia('camera_photo')}
-              testID="take-photo-button"
-            />
-            <AppButton
-              title="Choose from Gallery"
-              variant="secondary"
-              onPress={() => handleSelectMedia('gallery_photo')}
-              testID="choose-gallery-button"
-            />
-          </View>
+        <View style={styles.secondaryRow}>
+          <AppButton
+            title="Take Photo"
+            icon="camera"
+            variant="secondary"
+            onPress={() => handleSelectMedia('camera_photo')}
+            testID="take-photo-button"
+            style={styles.secondaryButton}
+          />
+          <AppButton
+            title="Photo from Gallery"
+            icon="image"
+            variant="secondary"
+            onPress={() => handleSelectMedia('gallery_photo')}
+            testID="choose-gallery-button"
+            style={styles.secondaryButton}
+          />
+        </View>
+        <View style={styles.secondaryRow}>
+          <AppButton
+            title="Record Video"
+            icon="video"
+            variant="secondary"
+            onPress={() => handleSelectMedia('camera_video')}
+            testID="record-video-button"
+            style={styles.secondaryButton}
+          />
+          <AppButton
+            title="Video from Gallery"
+            icon="video"
+            variant="secondary"
+            onPress={() => handleSelectMedia('gallery_video')}
+            testID="choose-video-button"
+            style={styles.secondaryButton}
+          />
         </View>
 
         <AppButton
@@ -209,13 +195,13 @@ export default function ImageSelectionScreen() {
 const styles = StyleSheet.create({
   content: {
     paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
     paddingBottom: spacing.xl,
     gap: spacing.md,
   },
   guidance: {
     ...typography.body,
     color: colors.textSecondary,
-    marginBottom: spacing.xs,
   },
   errorBox: {
     backgroundColor: 'rgba(239, 68, 68, 0.1)',
@@ -229,46 +215,24 @@ const styles = StyleSheet.create({
     color: colors.danger,
     lineHeight: 18,
   },
-  cardSection: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    padding: spacing.lg,
-    gap: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.border,
+  heroCard: {
+    borderColor: colors.accentMuted,
+    alignItems: 'flex-start',
   },
-  cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
+  heroTitle: {...typography.h2, color: colors.textPrimary},
+  heroDescription: {
+    ...typography.body,
+    color: colors.textSecondary,
   },
-  sectionBadge: {
-    backgroundColor: colors.surfaceAlt,
-    color: colors.accent,
-    fontSize: 10,
-    fontWeight: '700',
-    paddingHorizontal: spacing.xs,
-    paddingVertical: 2,
-    borderRadius: radius.sm,
-    letterSpacing: 0.5,
-  },
-  liveBadge: {
-    color: colors.success,
-    backgroundColor: 'rgba(46, 204, 113, 0.15)',
-  },
-  cardTitle: {
-    ...typography.h3,
-    color: colors.textPrimary,
-  },
-  cardDescription: {
+  heroButton: {alignSelf: 'stretch', marginTop: spacing.xs},
+  sectionLabel: {
     ...typography.caption,
     color: colors.textMuted,
-    marginBottom: spacing.xs,
-  },
-  buttonStack: {
-    gap: spacing.sm,
-  },
-  cancelButton: {
+    fontWeight: '700',
+    letterSpacing: 0.5,
     marginTop: spacing.xs,
   },
+  secondaryRow: {flexDirection: 'row', gap: spacing.sm},
+  secondaryButton: {flex: 1},
+  cancelButton: {marginTop: spacing.sm, alignSelf: 'center'},
 });

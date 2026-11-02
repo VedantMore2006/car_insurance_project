@@ -30,7 +30,7 @@ function InspectionNavigator() {
       <InspectionStack.Screen
         name="ImageSelection"
         component={ImageSelectionScreen}
-        options={{title: 'Select Photo'}}
+        options={{title: 'Vehicle Inspection'}}
       />
       <InspectionStack.Screen
         name="CarScan"
