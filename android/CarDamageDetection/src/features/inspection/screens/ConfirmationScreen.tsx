@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
 import {useNavigation, useRoute, RouteProp} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import ScreenContainer from '../../../components/ScreenContainer';
@@ -53,7 +54,8 @@ export default function ConfirmationScreen() {
     }
   }, [submittedAt]);
 
-  const handleCopyReference = () => {
+  const handleCopyReference = async () => {
+    await Clipboard.setStringAsync(referenceNumber);
     Alert.alert(
       'Reference Copied',
       `Claim reference number ${referenceNumber} copied to clipboard for your records.`,

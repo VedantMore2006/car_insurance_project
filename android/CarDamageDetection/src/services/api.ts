@@ -315,14 +315,30 @@ export async function submitClaim(
         };
       } catch (err: any) {
         console.warn(`[CarDD API Warning] ${baseUrl}${endpoint} failed: ${err.message}`);
-        if (err.response?.status === 404) {
-          continue;
+        if (err.response) {
+          // The server was reached and actively rejected the request (bad auth, validation
+          // error, server fault, etc.) -- this is a real failure, never silently fabricate a
+          // "success" receipt for it. 404 is the one exception: it just means this particular
+          // route doesn't exist on this backend, so keep trying the other candidate endpoints.
+          if (err.response.status === 404) {
+            continue;
+          }
+          const detail =
+            typeof err.response.data === 'string'
+              ? err.response.data
+              : err.response.data?.detail || JSON.stringify(err.response.data);
+          throw new Error(
+            `Claim submission failed (${err.response.status}): ${detail || err.message}`,
+          );
         }
+        // No response at all (network unreachable / timeout) -- genuinely offline, keep trying
+        // other candidates and fall through to the offline receipt only if all of them fail this way.
       }
     }
   }
 
-  // Graceful offline fallback
+  // Graceful offline fallback -- only reached when every candidate endpoint was unreachable
+  // (network/timeout), never when the backend actively rejected the request.
   const year = new Date().getFullYear();
   const randomSuffix = Math.random().toString(36).substring(2, 8).toUpperCase();
   const offlineRef = `CLM-${year}-${randomSuffix}`;

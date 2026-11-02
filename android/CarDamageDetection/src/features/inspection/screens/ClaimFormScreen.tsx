@@ -50,7 +50,10 @@ export default function ClaimFormScreen() {
   const {imageUri: routeImageUri} = route.params || {};
   const activeImageUri = capturedImageURI || routeImageUri;
 
-  // Form Fields State initialized from global context
+  // Local state is the actual source of truth for rendering (useInspection() falls back to a
+  // static no-op value when this screen is rendered without an InspectionProvider, e.g. in unit
+  // tests, so the context alone can't be relied on to drive the form). It's seeded from context
+  // once and mirrored back on every change so a value picked earlier in the flow isn't lost.
   const [formData, setFormData] = useState<ClaimFormData>({
     claimantName: claimFormData.claimantName || '',
     policyNumber: claimFormData.policyNumber || '',
