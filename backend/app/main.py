@@ -3,7 +3,7 @@ import uuid
 import logging
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
-from typing import Optional
+from typing import List, Optional, Tuple
 
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Security, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -15,6 +15,8 @@ from .config import (
     MODEL_PATH,
     API_KEY,
     MAX_IMAGE_SIZE_BYTES,
+    MAX_VIDEO_SIZE_BYTES,
+    VIDEO_SAMPLE_FRAMES,
     DEFAULT_CONF_THRESHOLD,
     DEFAULT_IOU_THRESHOLD,
     DEBUG,
@@ -24,6 +26,7 @@ from .config import (
 from .schemas import (
     ClaimSubmissionRequest,
     ClaimSubmissionResponse,
+    DetectionItem,
     DetectionResponse,
     HealthResponse,
     ImageMetadata,
@@ -31,6 +34,10 @@ from .schemas import (
 from .services.inference import DamageDetector
 from .services.vehicle_classifier import VehicleClassifier
 from .utils.image import load_image_from_bytes
+from .utils.video import extract_sampled_frames
+
+VIDEO_CONTENT_TYPES = {"video/mp4", "video/quicktime", "video/x-m4v", "video/webm", "video/3gpp"}
+VIDEO_EXTENSIONS = (".mp4", ".mov", ".m4v", ".webm", ".3gp")
 
 logging.basicConfig(
     level=logging.INFO if not DEBUG else logging.DEBUG,
@@ -128,6 +135,48 @@ async def health_check():
     )
 
 
+def _best_video_frame(
+    frames, conf_thresh: float, iou_thresh: float
+) -> Tuple[List[DetectionItem], float, bool]:
+    """
+    Runs the vehicle-presence gate + damage detector on each sampled frame and returns the
+    detections/processing-time of whichever frame scored best (most detections, tie-broken by
+    summed confidence) among frames that pass the vehicle gate. The mobile overlay is a single
+    static set of boxes, not synced to playback time, so one representative frame's result is
+    what gets returned -- matching how a single photo upload already behaves.
+
+    Returns (detections, total_processing_time_ms, any_frame_had_vehicle).
+    """
+    best_detections: List[DetectionItem] = []
+    best_score = (-1, -1.0)
+    any_vehicle = False
+    total_time_ms = 0.0
+
+    for frame_rgb in frames:
+        if VEHICLE_CLASSIFIER_ENABLED:
+            vehicle_prob = vehicle_classifier.vehicle_probability(frame_rgb)
+            if vehicle_prob < VEHICLE_PROB_THRESHOLD:
+                continue
+        any_vehicle = True
+
+        h, w = frame_rgb.shape[:2]
+        detections, processing_time_ms = detector.predict(
+            image_rgb=frame_rgb,
+            orig_w=w,
+            orig_h=h,
+            conf_threshold=conf_thresh,
+            iou_threshold=iou_thresh,
+        )
+        total_time_ms += processing_time_ms
+
+        score = (len(detections), sum(d.confidence for d in detections))
+        if score > best_score:
+            best_score = score
+            best_detections = detections
+
+    return best_detections, round(total_time_ms, 2), any_vehicle
+
+
 @app.post(
     "/api/v1/detect",
     response_model=DetectionResponse,
@@ -144,7 +193,9 @@ async def health_check():
     status_code=status.HTTP_200_OK,
 )
 async def detect_damage(
-    image: UploadFile = File(..., description="Vehicle image file (JPEG, PNG, WebP)"),
+    image: UploadFile = File(
+        ..., description="Vehicle image (JPEG, PNG, WebP) or short video clip (MP4, MOV, WebM)"
+    ),
     confidenceThreshold: Optional[float] = Form(
         None, description="Optional minimum detection confidence threshold [0.0 - 1.0]"
     ),
@@ -154,8 +205,8 @@ async def detect_damage(
     _authorized: bool = Depends(verify_api_key),
 ):
     """
-    Analyzes an uploaded car damage photo, identifies damage classes, and returns
-    accurate bounding box coordinates aligned to original image dimensions.
+    Analyzes an uploaded car damage photo or short video clip, identifies damage classes, and
+    returns accurate bounding box coordinates aligned to original frame dimensions.
     """
     request_id = str(uuid.uuid4())
 
@@ -166,67 +217,35 @@ async def detect_damage(
             detail="No image file provided in upload request",
         )
 
+    filename_lower = image.filename.lower()
+    is_video = (image.content_type in VIDEO_CONTENT_TYPES) or filename_lower.endswith(
+        VIDEO_EXTENSIONS
+    )
+
     # 2. Read file content and enforce size limits
     try:
-        image_bytes = await image.read()
+        file_bytes = await image.read()
     except Exception as e:
-        logger.error("Failed to read image bytes: %s", e)
+        logger.error("Failed to read upload bytes: %s", e)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Failed to read image upload: {str(e)}",
+            detail=f"Failed to read upload: {str(e)}",
         )
 
-    if len(image_bytes) == 0:
+    if len(file_bytes) == 0:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Uploaded image file is empty (0 bytes)",
+            detail="Uploaded file is empty (0 bytes)",
         )
 
-    if len(image_bytes) > MAX_IMAGE_SIZE_BYTES:
+    max_size = MAX_VIDEO_SIZE_BYTES if is_video else MAX_IMAGE_SIZE_BYTES
+    if len(file_bytes) > max_size:
         raise HTTPException(
             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-            detail=f"Uploaded image exceeds maximum allowed size ({MAX_IMAGE_SIZE_BYTES // (1024 * 1024)} MB)",
+            detail=f"Uploaded file exceeds maximum allowed size ({max_size // (1024 * 1024)} MB)",
         )
 
-    # 3. Decode image, sanitize metadata, and correct EXIF orientation
-    try:
-        image_rgb, orig_w, orig_h = load_image_from_bytes(image_bytes)
-    except ValueError as ve:
-        logger.warning("Rejected invalid image upload (security check): %s", ve)
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=f"Security verification failed: {str(ve)}",
-        )
-    except Exception as e:
-        logger.warning("Unexpected error during image decoding: %s", e)
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Could not process image. Please upload a standard JPEG, PNG, or WebP photo.",
-        )
-
-    # 4. Reject images that don't plausibly contain a vehicle (e.g. a laptop/desk photo) before
-    # running the damage model, which was never trained to recognize "is this even a car".
-    if VEHICLE_CLASSIFIER_ENABLED:
-        try:
-            vehicle_prob = vehicle_classifier.vehicle_probability(image_rgb)
-        except Exception as e:
-            logger.error("Vehicle-presence check failed: %s", e, exc_info=True)
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Vehicle-presence check failed during image processing.",
-            )
-        if vehicle_prob < VEHICLE_PROB_THRESHOLD:
-            logger.info(
-                "Rejected upload: no vehicle detected (vehicle_prob=%.4f < %.4f)",
-                vehicle_prob,
-                VEHICLE_PROB_THRESHOLD,
-            )
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="No vehicle detected in the image. Please upload a clear photo of a car.",
-            )
-
-    # 5. Resolve threshold parameters
+    # 3. Resolve threshold parameters (shared by both paths)
     conf_thresh = (
         confidenceThreshold
         if confidenceThreshold is not None and 0.0 <= confidenceThreshold <= 1.0
@@ -238,30 +257,114 @@ async def detect_damage(
         else DEFAULT_IOU_THRESHOLD
     )
 
-    # 6. Run inference pipeline
-    try:
-        detections, processing_time_ms = detector.predict(
-            image_rgb=image_rgb,
-            orig_w=orig_w,
-            orig_h=orig_h,
-            conf_threshold=conf_thresh,
-            iou_threshold=iou_thresh,
-        )
-    except Exception as e:
-        logger.error("Inference execution failed: %s", e, exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Inference pipeline execution error: {str(e)}",
-        )
+    if is_video:
+        # 4a. Decode and sample frames across the clip
+        try:
+            frames, orig_w, orig_h = extract_sampled_frames(file_bytes, VIDEO_SAMPLE_FRAMES)
+        except ValueError as ve:
+            logger.warning("Rejected invalid video upload (security check): %s", ve)
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"Security verification failed: {str(ve)}",
+            )
+        except Exception as e:
+            logger.warning("Unexpected error during video decoding: %s", e)
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Could not process video. Please upload a standard MP4, MOV, or WebM clip.",
+            )
 
-    logger.info(
-        "Request %s: %d detections found in %.2f ms (image %dx%d)",
-        request_id[:8],
-        len(detections),
-        processing_time_ms,
-        orig_w,
-        orig_h,
-    )
+        # 5a. Run the vehicle gate + damage detector per sampled frame, keep the best frame
+        try:
+            detections, processing_time_ms, any_vehicle = _best_video_frame(
+                frames, conf_thresh, iou_thresh
+            )
+        except Exception as e:
+            logger.error("Video inference execution failed: %s", e, exc_info=True)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Inference pipeline execution error: {str(e)}",
+            )
+
+        if VEHICLE_CLASSIFIER_ENABLED and not any_vehicle:
+            logger.info("Rejected video upload: no vehicle detected in any sampled frame")
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="No vehicle detected in the video. Please record a clear clip of a car.",
+            )
+
+        logger.info(
+            "Request %s: %d detections found in %.2f ms (video %dx%d, %d frames sampled)",
+            request_id[:8],
+            len(detections),
+            processing_time_ms,
+            orig_w,
+            orig_h,
+            len(frames),
+        )
+    else:
+        # 4b. Decode image, sanitize metadata, and correct EXIF orientation
+        try:
+            image_rgb, orig_w, orig_h = load_image_from_bytes(file_bytes)
+        except ValueError as ve:
+            logger.warning("Rejected invalid image upload (security check): %s", ve)
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"Security verification failed: {str(ve)}",
+            )
+        except Exception as e:
+            logger.warning("Unexpected error during image decoding: %s", e)
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Could not process image. Please upload a standard JPEG, PNG, or WebP photo.",
+            )
+
+        # 5b. Reject images that don't plausibly contain a vehicle (e.g. a laptop/desk photo)
+        # before running the damage model, which was never trained to recognize "is this a car".
+        if VEHICLE_CLASSIFIER_ENABLED:
+            try:
+                vehicle_prob = vehicle_classifier.vehicle_probability(image_rgb)
+            except Exception as e:
+                logger.error("Vehicle-presence check failed: %s", e, exc_info=True)
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Vehicle-presence check failed during image processing.",
+                )
+            if vehicle_prob < VEHICLE_PROB_THRESHOLD:
+                logger.info(
+                    "Rejected upload: no vehicle detected (vehicle_prob=%.4f < %.4f)",
+                    vehicle_prob,
+                    VEHICLE_PROB_THRESHOLD,
+                )
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail="No vehicle detected in the image. Please upload a clear photo of a car.",
+                )
+
+        # 6b. Run inference pipeline
+        try:
+            detections, processing_time_ms = detector.predict(
+                image_rgb=image_rgb,
+                orig_w=orig_w,
+                orig_h=orig_h,
+                conf_threshold=conf_thresh,
+                iou_threshold=iou_thresh,
+            )
+        except Exception as e:
+            logger.error("Inference execution failed: %s", e, exc_info=True)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Inference pipeline execution error: {str(e)}",
+            )
+
+        logger.info(
+            "Request %s: %d detections found in %.2f ms (image %dx%d)",
+            request_id[:8],
+            len(detections),
+            processing_time_ms,
+            orig_w,
+            orig_h,
+        )
 
     return DetectionResponse(
         requestId=request_id,

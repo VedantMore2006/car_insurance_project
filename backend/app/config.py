@@ -27,6 +27,15 @@ VEHICLE_CLASSIFIER_ENABLED = os.getenv(
 API_KEY = os.getenv("API_KEY", "").strip()
 MAX_IMAGE_SIZE_BYTES = int(os.getenv("MAX_IMAGE_SIZE_BYTES", str(25 * 1024 * 1024)))  # 25 MB max
 
+# Video upload limits -- mirrors the mobile client's validation.ts (100MB / 60s), since both
+# sides should reject the same inputs rather than disagreeing on what's "too big".
+MAX_VIDEO_SIZE_BYTES = int(os.getenv("MAX_VIDEO_SIZE_BYTES", str(100 * 1024 * 1024)))  # 100 MB max
+MAX_VIDEO_DURATION_SECONDS = int(os.getenv("MAX_VIDEO_DURATION_SECONDS", "60"))
+# How many frames to sample evenly across the clip for damage inference. The overlay the mobile
+# app draws is a single static set of boxes (not synced to video playback time), so we run
+# detection per sampled frame and keep whichever frame scored the most/best detections.
+VIDEO_SAMPLE_FRAMES = int(os.getenv("VIDEO_SAMPLE_FRAMES", "6"))
+
 # Server configuration
 HOST = os.getenv("HOST", "0.0.0.0")
 PORT = int(os.getenv("PORT", "7000"))
