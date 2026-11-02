@@ -3,7 +3,6 @@ import {View, Text, StyleSheet, ScrollView, Alert} from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import {useRoute, RouteProp} from '@react-navigation/native';
 import ScreenContainer from '../../../components/ScreenContainer';
-import AppHeader from '../../../components/AppHeader';
 import AppButton from '../../../components/AppButton';
 import Badge from '../../../components/Badge';
 import Icon from '../../../components/Icon';
@@ -27,7 +26,6 @@ export default function ConfirmationScreen() {
     carRegistrationNumber = '',
     contactPhone = '',
     damageCount = 0,
-    detectedLabels = [],
     highestConfidenceClass,
     highestConfidence,
     submittedAt = new Date().toISOString(),
@@ -67,11 +65,6 @@ export default function ConfirmationScreen() {
 
   return (
     <ScreenContainer scroll testID="confirmation-screen">
-      <AppHeader
-        title="Claim Confirmation"
-        subtitle="Your insurance claim has been officially registered"
-      />
-
       <ScrollView contentContainerStyle={styles.content}>
         {/* 1. Success Hero Badge */}
         <View style={styles.heroContainer}>
@@ -135,33 +128,21 @@ export default function ConfirmationScreen() {
 
           <View style={styles.receiptDivider} />
 
+          {/* Already shown in full on Results and the claim form -- this receipt only needs to
+              confirm what was filed, as one line, not re-render the whole breakdown again. */}
           <View style={styles.receiptRow}>
-            <Text style={styles.receiptLabel}>Damages Logged:</Text>
+            <Text style={styles.receiptLabel}>Damage Summary:</Text>
             <Text style={styles.receiptValueHighlight}>
-              {damageCount} item{damageCount !== 1 ? 's' : ''} detected
+              {damageCount} item{damageCount !== 1 ? 's' : ''}
+              {highestConfidenceClass
+                ? ` · ${highestConfidenceClass}${
+                    highestConfidence !== undefined
+                      ? ` (${(highestConfidence * 100).toFixed(0)}%)`
+                      : ''
+                  }`
+                : ''}
             </Text>
           </View>
-
-          {highestConfidenceClass ? (
-            <View style={styles.receiptRow}>
-              <Text style={styles.receiptLabel}>Primary Damage:</Text>
-              <Text style={styles.receiptValue}>
-                {highestConfidenceClass}
-                {highestConfidence !== undefined
-                  ? ` (${(highestConfidence * 100).toFixed(1)}%)`
-                  : ''}
-              </Text>
-            </View>
-          ) : null}
-
-          {detectedLabels && detectedLabels.length > 0 ? (
-            <View style={styles.receiptRow}>
-              <Text style={styles.receiptLabel}>Damage Types:</Text>
-              <Text style={styles.receiptTagsValue}>
-                {detectedLabels.join(', ')}
-              </Text>
-            </View>
-          ) : null}
 
           <View style={styles.receiptDivider} />
 
@@ -285,14 +266,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.warning,
     textAlign: 'right',
-  },
-  receiptTagsValue: {
-    fontSize: typography.body.fontSize,
-    fontWeight: '600',
-    color: colors.accent,
-    textAlign: 'right',
-    textTransform: 'capitalize',
-    flex: 1.5,
   },
   receiptDateValue: {
     fontSize: typography.caption.fontSize,

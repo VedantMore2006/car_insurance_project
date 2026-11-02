@@ -3,7 +3,6 @@ import {View, Text, StyleSheet} from 'react-native';
 import {useNavigation, useRoute, RouteProp} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import ScreenContainer from '../../../components/ScreenContainer';
-import AppHeader from '../../../components/AppHeader';
 import AppButton from '../../../components/AppButton';
 import LoadingIndicator from '../../../components/LoadingIndicator';
 import ErrorState from '../../../components/ErrorState';
@@ -47,6 +46,7 @@ export default function DetectionProgressScreen() {
       navigation.replace('DetectionResults', route.params);
     } else if (detection.state === 'error' && detection.error) {
       setSessionError(detection.error);
+      navigation.setOptions({title: 'Analysis Failed'});
     }
   }, [
     detection.state,
@@ -68,7 +68,6 @@ export default function DetectionProgressScreen() {
   if (detection.state === 'error' && detection.error) {
     return (
       <ScreenContainer>
-        <AppHeader title="Analysis Failed" />
         <ErrorState message={detection.error.message} onRetry={handleRetry} />
         <AppButton
           title="Cancel"
@@ -82,7 +81,6 @@ export default function DetectionProgressScreen() {
 
   return (
     <ScreenContainer>
-      <AppHeader title={isVideo ? 'Analyzing Video' : 'Analyzing Photo'} />
       <View style={styles.content}>
         <LoadingIndicator
           message={

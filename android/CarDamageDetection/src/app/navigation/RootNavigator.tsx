@@ -48,11 +48,11 @@ function InspectionNavigator() {
       <InspectionStack.Screen
         name="DetectionProgress"
         component={DetectionProgressScreen}
-        options={{
-          title: 'Analyzing',
+        options={({route}) => ({
+          title: route.params?.mediaType === 'video' ? 'Analyzing Video' : 'Analyzing Photo',
           headerBackVisible: false,
           gestureEnabled: false,
-        }}
+        })}
       />
       <InspectionStack.Screen
         name="DamageOverlay"

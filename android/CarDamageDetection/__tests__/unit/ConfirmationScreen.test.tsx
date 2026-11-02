@@ -60,8 +60,7 @@ describe('ConfirmationScreen Component', () => {
     expect(getByText('POL-777-KITT')).toBeTruthy();
     expect(getByText('KNIGHT 2000')).toBeTruthy();
     expect(getByText('+1 555-0199')).toBeTruthy();
-    expect(getByText('3 items detected')).toBeTruthy();
-    expect(getByText('dent, crack, lamp broken')).toBeTruthy();
+    expect(getByText('3 items · dent (97%)')).toBeTruthy();
   });
 
   it('clears inspection session and navigates back to Dashboard on Done press', async () => {

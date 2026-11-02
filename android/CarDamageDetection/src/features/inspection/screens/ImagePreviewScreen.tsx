@@ -3,11 +3,11 @@ import {View, Text, StyleSheet} from 'react-native';
 import {useNavigation, useRoute, RouteProp} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import ScreenContainer from '../../../components/ScreenContainer';
-import AppHeader from '../../../components/AppHeader';
 import AppButton from '../../../components/AppButton';
+import Badge from '../../../components/Badge';
 import ImagePreview from '../../../components/ImagePreview';
 import VideoPreview from '../../../components/VideoPreview';
-import {colors, radius, spacing, typography} from '../../../config/theme';
+import {colors, spacing, typography} from '../../../config/theme';
 import {InspectionStackParamList} from '../../../app/navigation/navigationTypes';
 import {formatDuration} from '../../../utils/formatters';
 
@@ -22,10 +22,9 @@ export default function ImagePreviewScreen() {
 
   return (
     <ScreenContainer scroll>
-      <AppHeader
-        title={isVideo ? 'Video Preview' : 'Photo Preview'}
-        subtitle={`Confirm this is the ${isVideo ? 'video' : 'photo'} you want to analyze`}
-      />
+      <Text style={styles.screenSubtitle}>
+        Confirm this is the {isVideo ? 'video' : 'photo'} you want to analyze
+      </Text>
       <View style={styles.content}>
         {isVideo ? (
           <VideoPreview uri={imageUri} duration={duration} />
@@ -34,11 +33,7 @@ export default function ImagePreviewScreen() {
         )}
 
         <View style={styles.metaRow}>
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>
-              {isVideo ? 'VIDEO STREAM' : 'STILL PHOTO'}
-            </Text>
-          </View>
+          <Badge tone="accent" label={isVideo ? 'VIDEO STREAM' : 'STILL PHOTO'} />
           {width && height ? (
             <Text style={styles.dimensions}>
               {width} x {height} px
@@ -84,6 +79,12 @@ export default function ImagePreviewScreen() {
 }
 
 const styles = StyleSheet.create({
+  screenSubtitle: {
+    ...typography.body,
+    color: colors.textSecondary,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+  },
   content: {paddingHorizontal: spacing.lg, paddingBottom: spacing.xl, gap: spacing.md},
   metaRow: {
     flexDirection: 'row',
@@ -91,19 +92,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: spacing.sm,
     flexWrap: 'wrap',
-  },
-  badge: {
-    backgroundColor: colors.surfaceAlt,
-    paddingHorizontal: spacing.xs,
-    paddingVertical: 2,
-    borderRadius: radius.sm,
-  },
-  badgeText: {
-    ...typography.caption,
-    color: colors.accent,
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 0.5,
   },
   dimensions: {
     ...typography.caption,
