@@ -21,6 +21,7 @@
         "CAMERA",
         "INTERNET"
       ],
+      "usesCleartextTraffic": true,
       "predictiveBackGestureEnabled": false
     },
     "web": {
