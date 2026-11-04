@@ -21,7 +21,6 @@
         "CAMERA",
         "INTERNET"
       ],
-      "usesCleartextTraffic": true,
       "predictiveBackGestureEnabled": false
     },
     "web": {
@@ -37,6 +36,14 @@
           "imageWidth": 220,
           "resizeMode": "contain",
           "backgroundColor": "#0B1220"
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
         }
       ]
     ],
